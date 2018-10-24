@@ -1,46 +1,38 @@
-import libtcodpy as libtcod
-from input_handlers import handle_keys
-
+import tcod
+import constants
+from render.renderer import Renderer
 
 def main():
-    screen_width = 80
-    screen_height = 50
+    #Console object for tcod
+    root_console = init_console()
 
-    player_x = int(screen_width / 2)
-    player_y = int(screen_height / 2)
+    #Renderer object for graphics
+    renderer = Renderer(root_console)
 
-    libtcod.console_set_custom_font('arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+    #Events used for inputs
+    key_event = tcod.Key()
+    mouse_event = tcod.Mouse()
 
-    con = libtcod.console_new(screen_width, screen_height)
+    while not tcod.console_is_window_closed():
+        #Get inputs
+        tcod.sys_check_for_event(tcod.EVENT_KEY_PRESS, key_event, mouse_event)
 
-    key = libtcod.Key()
-    mouse = libtcod.Mouse()
+        #Handle any console-level changes (including quit)
+        if key_event.vk == tcod.KEY_ESCAPE:
+            return True;
 
-    libtcod.console_init_root(screen_width, screen_height, 'libtcod tutorial revised', False)
+        #Update world model
+        ###TODO###
 
-    while not libtcod.console_is_window_closed():
-        libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, mouse)
+        #Render everything
+        renderer.render()
 
-        libtcod.console_set_default_foreground(0, libtcod.white)
-        libtcod.console_put_char(0, player_x, player_y, '@', libtcod.BKGND_NONE)
-        libtcod.console_flush()
 
-        action = handle_keys(key)
-        move = action.get('move')
-        exit = action.get('exit')
-        fullscreen = action.get('fullscreen')
-
-        if move:
-            dx, dy = move
-            player_x += dx
-            player_y += dy
-
-        if exit:
-            return True
-
-        if fullscreen:
-            libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-
+def init_console():
+    screen_width = constants.CONSOLE_WIDTH
+    screen_height = constants.CONSOLE_HEIGHT
+    tcod.console_set_custom_font('arial10x10.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
+    return tcod.console_init_root(screen_width, screen_height, 'Game main window title text?')
 
 if __name__ == '__main__':
     main()
