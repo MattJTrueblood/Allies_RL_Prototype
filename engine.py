@@ -1,17 +1,22 @@
 import tcod
 import constants
-from render.renderer import Renderer
+from render import renderer
+import core
+from render.frame import Frame
+from render.panel import Panel
 
 def main():
-    #Console object for tcod
-    root_console = init_console()
-
-    #Renderer object for graphics
-    renderer = Renderer(root_console)
-
     #Events used for inputs
     key_event = tcod.Key()
     mouse_event = tcod.Mouse()
+
+    #set up start menu
+    start_frame = Frame("start frame")
+    start_panel = Panel(0, 0, constants.CONSOLE_WIDTH, constants.CONSOLE_HEIGHT)
+    start_panel.set_bg_color(tcod.Color(0, 100, 0))
+    start_frame.add_panel(start_panel)
+    renderer.add_frame(start_frame)
+    renderer.set_current_frame("start frame")
 
     while not tcod.console_is_window_closed():
         #Get inputs
@@ -26,13 +31,6 @@ def main():
 
         #Render everything
         renderer.render()
-
-
-def init_console():
-    screen_width = constants.CONSOLE_WIDTH
-    screen_height = constants.CONSOLE_HEIGHT
-    tcod.console_set_custom_font('arial10x10.png', tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
-    return tcod.console_init_root(screen_width, screen_height, 'Game main window title text?')
 
 if __name__ == '__main__':
     main()
