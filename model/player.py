@@ -1,3 +1,4 @@
+import model.dungeon as dungeon
 
 class Player:
 
@@ -20,5 +21,6 @@ class Player:
     def move(self, dir_numpad):
         #convert direction (numpad keys for now) into (x, y)
         dir_xy = Player.MOVE_SWITCH.get(dir_numpad, (0, 0))
-        self.x += dir_xy[0]
-        self.y += dir_xy[1]
+        if not dungeon.current_floor.get_tile(self.x+dir_xy[0], self.y + dir_xy[1]).is_obstacle:
+            self.x += dir_xy[0]
+            self.y += dir_xy[1]

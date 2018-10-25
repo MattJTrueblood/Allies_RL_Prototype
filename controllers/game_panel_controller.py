@@ -17,13 +17,12 @@ class GamePanelController(BasePanelController):
     def redraw_canvas(self):
 
         #Draw dungeon relative to player
-        dungeon_tiles = dungeon.current_floor.body
         for i in range(self.canvas.width):
             for j in range(self.canvas.height):
                 i_world = dungeon.player.x - self.panel_center_x + i
                 j_world = dungeon.player.y - self.panel_center_y + j
                 if(i_world >= 0 and i_world < dungeon.current_floor.width and j_world >= 0 and j_world < dungeon.current_floor.height):
-                    tile_to_draw = dungeon.current_floor.body[j_world][i_world]
+                    tile_to_draw = dungeon.current_floor.get_tile(i_world, j_world).canvas_tile
                     self.canvas.put_char(i, j, tile_to_draw.bgcolor, tile_to_draw.fgcolor, tile_to_draw.character)
                 else:
                     self.canvas.put_tile(i, j, PanelCanvas.default_canvas_tile)

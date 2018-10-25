@@ -1,6 +1,6 @@
 import tcod
 
-class Tile:
+class CanvasTile:
 
     def __init__(self, bgcolor, fgcolor, character):
         self.bgcolor = bgcolor

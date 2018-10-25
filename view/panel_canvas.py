@@ -1,10 +1,10 @@
 import tcod
 import core
-from view.tile import Tile
+from view.canvas_tile import CanvasTile
 
 class PanelCanvas:
 
-    default_canvas_tile = Tile(tcod.Color(0, 0, 0), tcod.Color(100, 100, 100), ' ')
+    default_canvas_tile = CanvasTile(tcod.Color(0, 0, 0), tcod.Color(100, 100, 100), ' ')
 
     def __init__(self, x, y, width, height):
         self.x_offset = x
@@ -28,4 +28,4 @@ class PanelCanvas:
         self.body[tile_y][tile_x] = tile
 
     def put_char(self, tile_x, tile_y, bgcolor, fgcolor, char):
-        self.body[tile_y][tile_x] = Tile(bgcolor, fgcolor, char)
+        self.body[tile_y][tile_x] = CanvasTile(bgcolor, fgcolor, char)
