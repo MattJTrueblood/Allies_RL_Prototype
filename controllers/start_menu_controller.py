@@ -6,7 +6,7 @@ class StartMenuController(BasePanelController):
         super().__init__()
 
     def handle_key_event(self, key_event):
-        print("key_event_for_start_menu!")
+        pass #TODO
 
     def handle_mouse_event(self, mouse_event):
-        print("mouse_event_for_start_menu!")
+        pass #TODO
