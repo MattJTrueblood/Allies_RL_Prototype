@@ -15,6 +15,9 @@ class Panel:
     def render(self):
         self.controller.canvas.render()
 
+    def update(self):
+        self.controller.update()
+
     def handle_key_event(self, key_event):
         if self.controller:
             self.controller.handle_key_event(key_event)

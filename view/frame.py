@@ -12,6 +12,10 @@ class Frame:
         for panel in self.panels:
             panel.render()
 
+    def update(self):
+        for panel in self.panels:
+            panel.update()
+
     def add_panel(self, panel):
         self.panels.append(panel)
 

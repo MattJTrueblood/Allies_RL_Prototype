@@ -27,8 +27,7 @@ def main():
         else:
             core.current_frame.receive_events(key_event, mouse_event)
 
-        #TODO:  update model
-
+        start_frame.update()
 
         #Draw
         renderer.render()

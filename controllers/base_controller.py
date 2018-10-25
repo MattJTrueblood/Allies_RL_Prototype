@@ -16,3 +16,7 @@ class BasePanelController(ABC):
     @abstractmethod
     def handle_mouse_event(self, mouse_event):
         pass
+
+    @abstractmethod
+    def update(self):
+        pass
