@@ -111,19 +111,13 @@ Self button/menu, Allies button/menu.  Interaction button.
 
 #### Main interface:
 
-|----------|------|
-
-|          |status|
-
-|   game   |      |
-
-|          |      |
-
-|----------|------|
-
-| messages |  ?   |
-
-|----------|------|
+    |----------|------|
+    |          |status|
+    |   game   |      |
+    |          |      |
+    |----------|------|
+    | messages |  ?   |
+    |----------|------|
 
 #### Game
 
