@@ -14,7 +14,6 @@ def main():
     #set up start menu
     start_frame = Frame("start frame")
     start_panel = Panel(0, 0, constants.CONSOLE_WIDTH, constants.CONSOLE_HEIGHT)
-    start_panel.set_bg_color(tcod.Color(0, 100, 0))
     start_panel.set_controller(StartMenuController())
     start_frame.add_panel(start_panel)
     core.add_frame(start_frame)

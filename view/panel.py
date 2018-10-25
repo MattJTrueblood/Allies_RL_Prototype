@@ -1,4 +1,3 @@
-import tcod
 import core
 
 class Panel:
@@ -8,18 +7,13 @@ class Panel:
         self.width = width
         self.height = height
         self.controller = None
-        self.bg_color = None
 
     def set_controller(self, controller):
         self.controller = controller
-
-    def set_bg_color(self, color):
-        self.bg_color = color
+        self.controller.init_canvas(self.x, self.y, self.width, self.height)
 
     def render(self):
-        #Default behavior is to fill with background color.
-        core.root_console.default_bg = self.bg_color
-        tcod.console_rect(core.root_console, self.x, self.y, self.width, self.height, True, True)
+        self.controller.canvas.render()
 
     def handle_key_event(self, key_event):
         if self.controller:
