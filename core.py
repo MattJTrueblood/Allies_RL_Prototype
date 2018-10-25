@@ -11,3 +11,13 @@ def init_console():
     return tcod.console_init_root(screen_width, screen_height, 'Game main window title text?')
 
 root_console = init_console()
+
+active_frames = []
+current_frame = None
+
+def add_frame(new_frame):
+    active_frames.append(new_frame)
+
+def set_current_frame(frame_name):
+    global current_frame
+    current_frame = next((x for x in active_frames if x.name == frame_name), None)

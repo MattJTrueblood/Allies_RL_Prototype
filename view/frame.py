@@ -14,3 +14,8 @@ class Frame:
 
     def add_panel(self, panel):
         self.panels.append(panel)
+
+    def receive_events(self, key_event, mouse_event):
+        for panel in self.panels:
+            panel.handle_key_event(key_event)
+            panel.handle_mouse_event(mouse_event)
