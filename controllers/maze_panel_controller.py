@@ -3,6 +3,7 @@ import tcod
 import time
 from random import shuffle
 
+#This Controller draws a cool depth-first maze.  Probably useless but cool anyways
 class MazePanelController(BasePanelController):
 
     def __init__(self):
