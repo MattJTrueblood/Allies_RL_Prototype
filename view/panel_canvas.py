@@ -4,14 +4,14 @@ import core
 class PanelCanvas:
 
     default_canvas_tile = {
-        "bgcolor": tcod.Color(0, 100, 0),
-        "fgcolor": tcod.Color(255, 255, 0),
+        "bgcolor": tcod.Color(0, 0, 0),
+        "fgcolor": tcod.Color(100, 100, 100),
         "char": '#'
     }
 
     def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
+        self.x_offset = x
+        self.y_offset = y
         self.width = width
         self.height = height
         self.body = [[None for i in range(self.width)] for j in range(self.height)]
@@ -22,7 +22,10 @@ class PanelCanvas:
                 tile = self.body[j][i]
                 if not tile:
                     tile = PanelCanvas.default_canvas_tile
-                self.draw_tile(tile, i, j)
+                self.__draw_tile(i, j, tile)
 
-    def draw_tile(self, tile, tile_x, tile_y):
-        tcod.console_put_char_ex(core.root_console, self.x + tile_x, self.y + tile_y, ord(tile["char"]), tile["fgcolor"], tile["bgcolor"])
+    def __draw_tile(self, tile_x, tile_y, tile):
+        tcod.console_put_char_ex(core.root_console, self.x_offset + tile_x, self.y_offset + tile_y, ord(tile["char"]), tile["fgcolor"], tile["bgcolor"])
+
+    def put_char(self, tile_x, tile_y, bgcolor, fgcolor, char):
+        self.body[tile_y][tile_x] = {"bgcolor": bgcolor, "fgcolor": fgcolor, "char": char}
