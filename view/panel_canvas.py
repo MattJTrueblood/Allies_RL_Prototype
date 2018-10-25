@@ -6,7 +6,7 @@ class PanelCanvas:
     default_canvas_tile = {
         "bgcolor": tcod.Color(0, 0, 0),
         "fgcolor": tcod.Color(100, 100, 100),
-        "char": '#'
+        "char": ' '
     }
 
     def __init__(self, x, y, width, height):

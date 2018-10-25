@@ -4,7 +4,7 @@ import core
 from view import renderer
 from view.frame import Frame
 from view.panel import Panel
-from controllers.maze_panel_controller import MazePanelController
+from controllers.game_panel_controller import GamePanelController
 
 def main():
     key_event = tcod.Key()
@@ -13,7 +13,7 @@ def main():
     #Build start menu
     start_frame = Frame("start frame")
     start_panel = Panel(0, 0, constants.CONSOLE_WIDTH, constants.CONSOLE_HEIGHT)
-    start_panel.set_controller(MazePanelController())
+    start_panel.set_controller(GamePanelController())
     start_frame.add_panel(start_panel)
     core.add_frame(start_frame)
     core.set_current_frame("start frame")
