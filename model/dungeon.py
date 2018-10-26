@@ -1,33 +1,46 @@
-from model.stub_floor import StubFloor
-from model.player import Player
+from model.floor import Floor
+from model.blank_floor_generator import BlankFloorGenerator
+from model.components.player_component import PlayerComponent
+from model.components.stair_component import StairComponent
+from model.entity import Entity
 import random
 
+NUM_FLOORS = 10
+
 floors = []
-for i in range(10):
-    floors.append(StubFloor(random.randint(5,20), random.randint(5,20)))
-current_floor_index = 0
+for i in range(NUM_FLOORS):
+    newfloor = Floor(random.randint(5,20), random.randint(5,20), BlankFloorGenerator())
+    floors.append(newfloor)
 
-player = Player()
+for i in range(NUM_FLOORS):
+    if i > 0:
+        floors[i].get_entity("up_stair").get_component(StairComponent).set_destination_floor(floors[i-1])
+    if i < NUM_FLOORS - 1:
+        floors[i].get_entity("down_stair").get_component(StairComponent).set_destination_floor(floors[i+1])
 
-def go_to_next_floor():
-    global current_floor_index
-    current_floor_index += 1
-    put_player_on_upstair()
-    print("down")
+current_floor = floors[0]
+player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.get_entity("up_stair").y)
+player.add_component(PlayerComponent(player))
+current_floor.entities.append(player)
 
-def go_to_prev_floor():
-    global current_floor_index
-    current_floor_index -= 1
+def go_up_to_floor(new_floor):
+    change_floor(new_floor)
     put_player_on_downstair()
-    print("up")
 
-def get_current_floor():
-    return floors[current_floor_index]
+def go_down_to_floor(new_floor):
+    change_floor(new_floor)
+    put_player_on_upstair()
+
+def change_floor(new_floor):
+    global current_floor
+    current_floor.entities.remove(player)
+    new_floor.entities.append(player)
+    current_floor = new_floor
 
 def put_player_on_upstair():
-    player.set_position(get_current_floor().upstair_x, get_current_floor().upstair_y)
+    current_floor_up_stair = current_floor.get_entity("up_stair")
+    player.get_component(PlayerComponent).set_position(current_floor_up_stair.x, current_floor_up_stair.y)
 
 def put_player_on_downstair():
-    player.set_position(get_current_floor().downstair_x, get_current_floor().downstair_y)
-
-put_player_on_upstair()
+    current_floor_down_stair = current_floor.get_entity("down_stair")
+    player.get_component(PlayerComponent).set_position(current_floor_down_stair.x, current_floor_down_stair.y)

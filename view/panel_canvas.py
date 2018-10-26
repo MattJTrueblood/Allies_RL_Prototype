@@ -29,3 +29,6 @@ class PanelCanvas:
 
     def put_char(self, tile_x, tile_y, bgcolor, fgcolor, char):
         self.body[tile_y][tile_x] = CanvasTile(bgcolor, fgcolor, char)
+
+    def get_tile(self, x, y):
+        return self.body[y][x]
