@@ -3,7 +3,7 @@ import tcod
 import model.dungeon as dungeon
 from view.panel_canvas import PanelCanvas
 from model.components.player_component import PlayerComponent
-from model.components.interfaces import Visible
+from model.components.visible_component import VisibleComponent
 from model.components.interfaces import Interactive
 
 class GamePanelController(BasePanelController):
@@ -30,7 +30,7 @@ class GamePanelController(BasePanelController):
 
         #Draw entities in viewport
         for entity in dungeon.current_floor.entities:
-            visible_component= entity.get_component(Visible)
+            visible_component= entity.get_component(VisibleComponent)
             if visible_component:
                 entity_xy_canvas = self.world_coord_to_canvas_coord(entity.x, entity.y)
                 if self.canvas_coord_in_bounds(entity_xy_canvas[0], entity_xy_canvas[1]):

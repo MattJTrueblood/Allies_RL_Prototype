@@ -2,7 +2,10 @@ from model.floor import Floor
 from model.blank_floor_generator import BlankFloorGenerator
 from model.components.player_component import PlayerComponent
 from model.components.stair_component import StairComponent
+from model.components.visible_component import VisibleComponent
 from model.entity import Entity
+from view.canvas_tile import CanvasTile
+import tcod
 import random
 
 NUM_FLOORS = 10
@@ -21,6 +24,7 @@ for i in range(NUM_FLOORS):
 current_floor = floors[0]
 player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.get_entity("up_stair").y)
 player.add_component(PlayerComponent(player))
+player.add_component(VisibleComponent(player, CanvasTile(None, tcod.Color(0, 255, 0), '@')))
 current_floor.entities.append(player)
 
 def go_up_to_floor(new_floor):

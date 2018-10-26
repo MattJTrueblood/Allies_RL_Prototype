@@ -1,13 +1,9 @@
 from abc import ABC, abstractmethod
 
 class Interactive(ABC):
-
     @abstractmethod
-    def interact(self, actor):
-        pass
+    def interact(self, actor): pass
 
-class Visible(ABC):
-
+class UpdateOnTick(ABC):
     @abstractmethod
-    def get_canvas_tile(self):
-        pass
+    def update(self): pass

@@ -3,6 +3,7 @@ from view.canvas_tile import CanvasTile
 from model.entity import Entity
 from model.base_floor_generator import BaseFloorGenerator
 from model.components.stair_component import StairComponent
+from model.components.visible_component import VisibleComponent
 import tcod
 import random
 
@@ -29,8 +30,10 @@ class BlankFloorGenerator(BaseFloorGenerator):
                 break
         up_stair = Entity("up_stair", up_stair_x, up_stair_y)
         down_stair = Entity("down_stair", down_stair_x, down_stair_y)
-        up_stair.add_component(StairComponent(True))
-        down_stair.add_component(StairComponent(False))
+        up_stair.add_component(StairComponent(up_stair, True))
+        up_stair.add_component(VisibleComponent(up_stair, CanvasTile(None, tcod.Color(255, 0, 0), '<')))
+        down_stair.add_component(StairComponent(up_stair, False))
+        down_stair.add_component(VisibleComponent(up_stair, CanvasTile(None, tcod.Color(255, 0, 0), '>')))
 
         entities.append(up_stair)
         entities.append(down_stair)

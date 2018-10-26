@@ -1,15 +1,14 @@
 from model.components.interfaces import Interactive
-from model.components.interfaces import Visible
+from model.components.base_component import BaseComponent
 import model.dungeon as dungeon
 from view.canvas_tile import CanvasTile
 import tcod
 
-class StairComponent(Interactive, Visible):
+class StairComponent(BaseComponent, Interactive):
 
-    def __init__(self, is_up):
+    def __init__(self, parent_entity, is_up):
+        super().__init__(parent_entity)
         self.is_up = is_up  #boolean, whether up-stair or down-stair
-        display_char = '<' if is_up else '>'
-        self.canvas_tile = CanvasTile(None, tcod.Color(255,0,0), display_char)
 
     def set_destination_floor(self, floor):
         self.dest_floor = floor
@@ -20,6 +19,3 @@ class StairComponent(Interactive, Visible):
                 dungeon.go_up_to_floor(self.dest_floor)
             else:
                 dungeon.go_down_to_floor(self.dest_floor)
-
-    def get_canvas_tile(self):
-        return self.canvas_tile
