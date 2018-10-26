@@ -29,7 +29,7 @@ class GamePanelController(BasePanelController):
                     self.canvas.put_tile(i, j, PanelCanvas.default_canvas_tile)
 
         #Draw entities in viewport
-        for entity in dungeon.current_floor.entities:
+        for entity in dungeon.current_floor.get_entities():
             visible_component= entity.get_component(VisibleComponent)
             if visible_component:
                 entity_xy_canvas = self.world_coord_to_canvas_coord(entity.x, entity.y)
@@ -67,10 +67,10 @@ class GamePanelController(BasePanelController):
     def handle_key_event(self, key_event):
         direction_to_move = GamePanelController.KEY_SWITCH.get(key_event.vk, None)
         if(direction_to_move):
-            dungeon.player.get_component(PlayerComponent).move(direction_to_move)
+            dungeon.player.get_component(PlayerComponent).move(direction_to_move[0], direction_to_move[1])
 
         if(key_event.vk == tcod.KEY_SPACE):
-            interactive_entity_next_to_player = next((entity for entity in dungeon.current_floor.entities
+            interactive_entity_next_to_player = next((entity for entity in dungeon.current_floor.get_entities()
                 if entity.get_component(Interactive) and entity.x == dungeon.player.x and entity.y == dungeon.player.y), None)
             if interactive_entity_next_to_player:
                 interactive_entity_next_to_player.get_component(Interactive).interact(dungeon.player)

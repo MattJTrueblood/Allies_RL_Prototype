@@ -5,11 +5,10 @@ import tcod
 
 class PlayerComponent(BaseComponent):
 
-    def move(self, dir):
-        #convert direction (numpad keys for now) into (x, y)
-        if not dungeon.current_floor.get_tile(self.parent_entity.x+dir[0], self.parent_entity.y + dir[1]).is_obstacle:
-            self.parent_entity.x += dir[0]
-            self.parent_entity.y += dir[1]
+    def move(self, dx, dy):
+        if not dungeon.current_floor.get_tile(self.parent_entity.x + dx, self.parent_entity.y + dy).is_obstacle:
+            self.parent_entity.x += dx
+            self.parent_entity.y += dy
 
     def interact(self):
         dungeon.current_floor.interact(self.entity.x, self.entity.y)

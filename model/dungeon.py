@@ -22,10 +22,10 @@ for i in range(NUM_FLOORS):
         floors[i].get_entity("down_stair").get_component(StairComponent).set_destination_floor(floors[i+1])
 
 current_floor = floors[0]
-player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.get_entity("up_stair").y)
+player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.get_entity("up_stair").y, True)
 player.add_component(PlayerComponent(player))
 player.add_component(VisibleComponent(player, CanvasTile(None, tcod.Color(0, 255, 0), '@')))
-current_floor.entities.append(player)
+current_floor.add_entity(player)
 
 def go_up_to_floor(new_floor):
     change_floor(new_floor)
@@ -37,8 +37,8 @@ def go_down_to_floor(new_floor):
 
 def change_floor(new_floor):
     global current_floor
-    current_floor.entities.remove(player)
-    new_floor.entities.append(player)
+    current_floor.remove_entity(player)
+    new_floor.add_entity(player)
     current_floor = new_floor
 
 def put_player_on_upstair():
