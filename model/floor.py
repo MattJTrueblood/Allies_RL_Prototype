@@ -2,23 +2,24 @@ import copy
 import tcod
 from model.dungeon_tile import DungeonTile
 from view.canvas_tile import CanvasTile
+from model.components.player_component import PlayerComponent
+from model.components.stair_component import StairComponent
 
 class Floor:
     defaul_dungeon_tile = DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), ' '), False)
 
-    def __init__(self, width, height, floor_generator):
+    def __init__(self, width, height, floor):
         self.width = width
         self.height = height
-        generated_floor = floor_generator.generate_floor(width, height)
-        self.__body = generated_floor[0]
-        self.__entities = generated_floor[1]
+        self.__body = floor
+        self.__entities = []
 
     def get_tile(self, x, y):
         return self.__body[x][y]
 
     def add_entity(self, new_entity, should_force=False):
         for entity in self.__entities:
-            if new_entity.x == entity.x and new_entity.y == entity.y and entity.obstructs:
+            if new_entity.x == entity.x and new_entity.y == entity.y and (entity.obstructs or (entity.get_component(StairComponent) and not new_entity.get_component(PlayerComponent))):
                 if not should_force:
                     return
                 new_entity_position = find_open_adjacent(new_entity.x, new_entity.y)

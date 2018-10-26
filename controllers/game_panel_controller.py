@@ -1,15 +1,18 @@
 from controllers.base_controller import BasePanelController
 import tcod
 import model.dungeon as dungeon
+import core
 from view.panel_canvas import PanelCanvas
 from model.components.player_component import PlayerComponent
 from model.components.visible_component import VisibleComponent
 from model.components.interfaces import Interactive
+from model.components.interfaces import UpdateOnTick
 
 class GamePanelController(BasePanelController):
 
     def __init__(self):
         super().__init__()
+        self.game_tick = core.master_tick
 
     def init_canvas(self, x, y, width, height):
         super().init_canvas(x, y, width, height)
@@ -81,4 +84,13 @@ class GamePanelController(BasePanelController):
         pass #TODO
 
     def update(self):
+        while self.game_tick < core.master_tick:
+            self.do_tick()
         self.redraw_canvas()
+
+    def do_tick(self):
+        for entity in dungeon.current_floor.get_entities():
+            component_to_update = entity.get_component(UpdateOnTick)
+            if component_to_update:
+                component_to_update.update()
+        self.game_tick += 1

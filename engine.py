@@ -27,9 +27,7 @@ def main():
         else:
             core.current_frame.receive_events(key_event, mouse_event)
 
-        start_frame.update()
-
-        #Draw
+        core.current_frame.update()
         renderer.render()
 
 if __name__ == '__main__':

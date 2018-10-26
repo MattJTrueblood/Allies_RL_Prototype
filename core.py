@@ -21,3 +21,5 @@ def add_frame(new_frame):
 def set_current_frame(frame_name):
     global current_frame
     current_frame = next((x for x in active_frames if x.name == frame_name), None)
+
+master_tick = 0
