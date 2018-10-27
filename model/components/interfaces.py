@@ -7,3 +7,6 @@ class Interactive(ABC):
 class UpdateOnTick(ABC):
     @abstractmethod
     def update(self): pass
+
+    @abstractmethod
+    def get_priority(self): pass

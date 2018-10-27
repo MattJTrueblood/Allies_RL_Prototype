@@ -5,7 +5,7 @@ from model.base_floor_generator import BaseFloorGenerator
 from model.components.stair_component import StairComponent
 from model.components.visible_component import VisibleComponent
 from model.components.health_component import HealthComponent
-from model.components.ai_component import AIComponent
+from model.components.enemy_component import EnemyComponent
 from model.floor import Floor
 import tcod
 import random
@@ -47,7 +47,7 @@ class BlankFloorGenerator(BaseFloorGenerator):
         #monsters
         for i in range(random.randint(1,20)):
             monster = Entity("monster " + str(i), random.randint(1, width-2), random.randint(1, height-2), True)
-            monster.add_component(AIComponent(monster))
+            monster.add_component(EnemyComponent(monster))
             monster.add_component(VisibleComponent(monster, CanvasTile(None, tcod.Color(0, 0, 255), '&')))
             monster.add_component(HealthComponent(monster, 1))
             floor.add_entity(monster)
