@@ -7,9 +7,7 @@ import core
 class PlayerComponent(BaseComponent):
 
     def move(self, dx, dy):
-        if (not dungeon.current_floor.get_tile(self.parent_entity.x + dx, self.parent_entity.y + dy).is_obstacle
-            and not next((entity for entity in dungeon.current_floor.get_entities()
-            if entity.obstructs and entity.x == self.parent_entity.x + dx and entity.y == self.parent_entity.y + dy), False)):
+        if dungeon.current_floor.can_move_into_tile(self.parent_entity.x + dx, self.parent_entity.y + dy):
             self.set_position(self.parent_entity.x + dx, self.parent_entity.y + dy)
             core.master_tick += 1
 

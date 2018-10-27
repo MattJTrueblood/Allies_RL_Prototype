@@ -44,6 +44,7 @@ class GamePanelController(BasePanelController):
 
 
 
+
     def canvas_coord_to_world_coord(self, x_canvas, y_canvas):
         x_world = dungeon.player.x - self.panel_center_x + x_canvas
         y_world = dungeon.player.y - self.panel_center_y + y_canvas

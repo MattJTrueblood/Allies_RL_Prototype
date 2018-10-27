@@ -44,7 +44,7 @@ class BlankFloorGenerator(BaseFloorGenerator):
         floor.add_entity(down_stair)
 
         #monsters
-        for i in range(random.randint(1,4)):
+        for i in range(random.randint(1,20)):
             monster = Entity("monster " + str(i), random.randint(1, width-2), random.randint(1, height-2), True)
             monster.add_component(AIComponent(monster))
             monster.add_component(VisibleComponent(monster, CanvasTile(None, tcod.Color(0, 0, 255), '&')))

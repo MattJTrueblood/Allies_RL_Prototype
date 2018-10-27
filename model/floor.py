@@ -19,10 +19,11 @@ class Floor:
 
     def add_entity(self, new_entity, should_force=False):
         for entity in self.__entities:
-            if new_entity.x == entity.x and new_entity.y == entity.y and (entity.obstructs or (entity.get_component(StairComponent) and not new_entity.get_component(PlayerComponent))):
+            if (new_entity.x == entity.x and new_entity.y == entity.y
+                and (self.can_move_into_tile(new_entity.x, new_entity.y) and (not entity.get_component(StairComponent) and not new_entity.get_component(PlayerComponent)))):
                 if not should_force:
                     return
-                new_entity_position = find_open_adjacent(new_entity.x, new_entity.y)
+                new_entity_position = __find_open_adjacent(new_entity.x, new_entity.y)
                 if not new_entity_position:
                     raise(Exception("Cannot add entity " + new_entity.name + " at " + new_entity.x + ", " + new_entity.y + ": obstructed"))
                     return #if there are really no open spaces
@@ -30,9 +31,16 @@ class Floor:
                 new_entity.y = new_entity_position[1]
         self.__entities.append(new_entity)
 
-    def find_open_adjacent(start_x, start_y):
-        #TODO
-        return (1, 1)
+    def __find_open_adjacent(start_x, start_y):
+        return None
+        #TODO!!!!
+
+    def can_move_into_tile(self, x, y):
+        for entity in self.__entities:
+            if (self.get_tile(x, y).is_obstacle
+                or entity.x == x and entity.y == y and entity.obstructs):
+                return False
+        return True
 
     def remove_entity(self, entity):
         self.__entities.remove(entity)

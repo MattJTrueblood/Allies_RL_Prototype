@@ -14,7 +14,7 @@ class AIComponent(BaseComponent, UpdateOnTick):
     def move(self, dx, dy):
         new_x = self.parent_entity.x + dx
         new_y = self.parent_entity.y + dy
-        if not dungeon.current_floor.get_tile(new_x, new_y).is_obstacle:
+        if dungeon.current_floor.can_move_into_tile(new_x, new_y):
             for entity in dungeon.current_floor.get_entities():
                 if entity.x == new_x and entity.y == new_y:
                     break
