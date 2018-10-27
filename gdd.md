@@ -8,7 +8,7 @@
  |_|  |_|_____|_|  \_\/_/    \_\_____|______|______|
 
   My Isekai Roguelike Adventure Cant Last forEver
-  俺の異世界ローグライクの冒険はいつまでもつづかない!                                                 
+  俺の異世界ローグライクの冒険はいつまでも続かないぞ!                                                 
 
 ```
 
@@ -79,7 +79,7 @@ allies, quickly leading to harem collapse.
 
 Allies have all sorts of colorful stats.  The important ones outside of combat are:
 
- - Embarrassment.  
+ - Embarrassment.  Various things will contribute to embarrassment.  
 
 ### Dungeon
 

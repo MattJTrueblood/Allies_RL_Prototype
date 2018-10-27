@@ -35,6 +35,9 @@ class Floor:
         return None
         #TODO!!!!
 
+    def get_entities_in_tile(self, x, y):
+        return [entity for entity in self.__entities if entity.x == x and entity.y == y]
+
     def can_move_into_tile(self, x, y):
         for entity in self.__entities:
             if (self.get_tile(x, y).is_obstacle
