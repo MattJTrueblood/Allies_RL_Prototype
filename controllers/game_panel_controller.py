@@ -90,7 +90,9 @@ class GamePanelController(BasePanelController):
         self.redraw_canvas()
 
     def do_tick(self):
-        for entity in dungeon.current_floor.get_entities():
+        entities_to_update = [entity for entity in dungeon.current_floor.get_entities() if entity.get_component(UpdateOnTick)]
+        entities_to_update.sort(key=lambda x: x.get_component(UpdateOnTick).get_priority(), reverse = True)
+        for entity in entities_to_update:
             component_to_update = entity.get_component(UpdateOnTick)
             if component_to_update:
                 component_to_update.update()

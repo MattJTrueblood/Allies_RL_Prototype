@@ -5,8 +5,9 @@ import random
 
 class EnemyComponent(BaseComponent, UpdateOnTick):
 
-    def __init(self, parent_entity):
+    def __init__(self, parent_entity):
         super().__init__(parent_entity)
+        self.priority = random.randint(1, 100)
 
     def update(self):
         self.move(random.randint(-1, 1), random.randint(-1, 1))
@@ -22,4 +23,4 @@ class EnemyComponent(BaseComponent, UpdateOnTick):
             self.parent_entity.y = new_y
 
     def get_priority(self):
-        return 1 #Enemies have a low priority, they will always act after allies or neutrals.
+        return self.priority
