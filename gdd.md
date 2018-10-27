@@ -21,13 +21,13 @@ a better game.
 
 ## Overview
 
-Allies_RL (name pending) is a a fantasy anime themed roguelike.  The core
-mechanic is a focus on gathering allies.  Each ally will be a full character
-with dialogue, individual traits, and gameplay progression.
+MIRACLE is a a fantasy anime-themed dungeon-crawl roguelike.  The core
+mechanic is a focus on gathering a harem of allies/romantic interests and stringing
+them along just enough so that they don't kill each other out of jealousy.
 
 ### Allies
 
-#### Introductions:
+#### How to acquire:
 
 1) Start with one (you get to choose 1 thing to bring with you, you can bring
    your imouto if you want)
@@ -39,7 +39,7 @@ with dialogue, individual traits, and gameplay progression.
 5) Encounter them as prisoners to a bad guy or in a jail cell.  Save them by
    defeating the bad guy or by unlocking the jail cell.
 
-#### Personality:
+#### Personality types:
 
 1) Himesama - Stuck-up princess from a faraway land
 2) Tsundere - Seems like a jerk at first but is really just shy
@@ -74,6 +74,12 @@ provide very powerful benefits, notably increased exp gain, unique skills such
 as "protect", and unlocking various actions that temporarily raise personal
 stats.  However, romance and intimate actions will raise the stress of other
 allies, quickly leading to harem collapse.
+
+### Stats:
+
+Allies have all sorts of colorful stats.  The important ones outside of combat are:
+
+ - Embarrassment.  
 
 ### Dungeon
 
