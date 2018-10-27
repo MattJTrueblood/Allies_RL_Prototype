@@ -1,3 +1,18 @@
+```
+
+  __  __ _____ _____            _____ _      ______
+ |  \/  |_   _|  __ \     /\   / ____| |    |  ____|
+ | \  / | | | | |__) |   /  \ | |    | |    | |__   
+ | |\/| | | | |  _  /   / /\ \| |    | |    |  __|  
+ | |  | |_| |_| | \ \  / ____ \ |____| |____| |____
+ |_|  |_|_____|_|  \_\/_/    \_\_____|______|______|
+
+  My Isekai Roguelike Adventure Cant Last forEver
+  俺の異世界ローグライクの冒険はいつまでもつづかない!                                                 
+
+```
+
+
 # GDD
 
 This GDD (Game Design Document) documents the thinking that is going into this
