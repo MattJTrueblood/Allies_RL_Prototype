@@ -19,7 +19,7 @@ class MessagePanelController(BasePanelController):
             self.canvas.put_tile(i, 0, CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), '-'))
 
         for j, message in enumerate(game.messages):
-            if(j > self.displayed_lines):
+            if(j >= self.displayed_lines):
                 break
             if(j == 0):
                 self.canvas.put_string(0, self.canvas.height - (j + 1), message, tcod.Color(255, 255, 255), bgcolor=tcod.Color(50, 50, 100))
