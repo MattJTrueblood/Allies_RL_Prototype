@@ -13,7 +13,7 @@ NUM_FLOORS = 10
 floors = []
 generator = BasicFloorGenerator()
 for i in range(NUM_FLOORS):
-    newfloor = generator.generate_floor(random.randint(15, 25), random.randint(15, 25))
+    newfloor = generator.generate_floor(random.randint(35, 55), random.randint(35, 55))
     floors.append(newfloor)
 
 for i in range(NUM_FLOORS):

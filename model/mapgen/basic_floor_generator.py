@@ -12,7 +12,7 @@ import random
 
 class BasicFloorGenerator(BaseFloorGenerator):
 
-    MIN_NUM_ROOMS = 3
+    MIN_NUM_ROOMS = 5
     MAX_NUM_ROOMS = 9
 
     MIN_ROOM_SIZE_RATIO = 0.15
@@ -21,25 +21,33 @@ class BasicFloorGenerator(BaseFloorGenerator):
     MAX_GAP_BETWEEN_ROOMS = 3
 
     def generate_floor(self, width, height):
+        self.width = width
+        self.height = height
         #all walls at start
         tiles = [[DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), '#'), True) for i in range(height)] for j in range(width)]
         #create rooms
-        rooms = self.generate_room_locations(width, height)
-        #foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar
-        for room_num, room in enumerate(rooms):
+        self.rooms = self.generate_room_locations()
+        #Fill in rooms
+        for room_num, room in enumerate(self.rooms):
             for i in range(room["x"], room["x"] + room["w"]):
                 for j in range(room["y"], room["y"] + room["h"]):
-                    tiles[i][j].canvas_tile.character = chr(room_num)
+                    tiles[i][j].canvas_tile.character = '.'
                     tiles[i][j].is_obstacle = False
+        #create corridors
+        corridors = self.generate_corridors()
+        for corridor in corridors:
+            for coord in cooridor:
+                tiles[coord[0]][coord[1]].canvas_tile.character = "*"
+                tiles[coord[0]][coord[1]].canvas_tile.fgcolor = tcod.Color(255, 255, 0)
 
         floor = Floor(width, height, tiles)
 
         #Stairs
-        up_stair_x = random.randint(rooms[0]["x"], rooms[0]["x"] + rooms[0]["w"])
-        up_stair_y = random.randint(rooms[0]["y"], rooms[0]["y"] + rooms[0]["h"])
+        up_stair_x = random.randint(rooms[0]["x"], rooms[0]["x"] + rooms[0]["w"] - 1)
+        up_stair_y = random.randint(rooms[0]["y"], rooms[0]["y"] + rooms[0]["h"] - 1)
         while True:
-            down_stair_x = random.randint(rooms[0]["x"], rooms[0]["x"] + rooms[0]["w"])
-            down_stair_y = random.randint(rooms[0]["y"], rooms[0]["y"] + rooms[0]["h"])
+            down_stair_x = random.randint(rooms[0]["x"], rooms[0]["x"] + rooms[0]["w"] - 1)
+            down_stair_y = random.randint(rooms[0]["y"], rooms[0]["y"] + rooms[0]["h"] - 1)
             if down_stair_x != up_stair_x or down_stair_y != up_stair_y:
                 break
         up_stair = Entity("up_stair", up_stair_x, up_stair_y)
@@ -53,12 +61,12 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
         return floor
 
-    def generate_room_locations(self, width, height):
+    def generate_room_locations(self):
         rooms = []
-        min_room_width = int(width * BasicFloorGenerator.MIN_ROOM_SIZE_RATIO)
-        max_room_width = int(width * BasicFloorGenerator.MAX_ROOM_SIZE_RATIO)
-        min_room_height = int(height * BasicFloorGenerator.MIN_ROOM_SIZE_RATIO)
-        max_room_height = int(height * BasicFloorGenerator.MAX_ROOM_SIZE_RATIO)
+        min_room_width = int(self.width * BasicFloorGenerator.MIN_ROOM_SIZE_RATIO)
+        max_room_width = int(self.width * BasicFloorGenerator.MAX_ROOM_SIZE_RATIO)
+        min_room_height = int(self.height * BasicFloorGenerator.MIN_ROOM_SIZE_RATIO)
+        max_room_height = int(self.height * BasicFloorGenerator.MAX_ROOM_SIZE_RATIO)
 
         ideal_num_rooms = random.randint(BasicFloorGenerator.MIN_NUM_ROOMS, BasicFloorGenerator.MAX_NUM_ROOMS)
 
@@ -66,17 +74,17 @@ class BasicFloorGenerator(BaseFloorGenerator):
         while guess_counter < 100 and len(rooms) < ideal_num_rooms:
             guess_room_width = random.randint(min_room_width, max_room_width)
             guess_room_height = random.randint(min_room_height, max_room_height)
-            room_guess = self.generate_potential_room_location(guess_room_width, guess_room_height, width, height)
+            room_guess = self.generate_potential_room_location(guess_room_width, guess_room_height)
             if self.is_room_location_valid(room_guess, rooms):
-                print("found valid room!")
+                room_guess["id"] = len(rooms)
                 rooms.append(room_guess)
                 guess_counter = 0
             guess_counter += 1
         return rooms
 
-    def generate_potential_room_location(self, guess_width, guess_height, floor_width, floor_height):
-        guess_room_x = random.randint(0, floor_width - guess_width)
-        guess_room_y = random.randint(0, floor_height - guess_height)
+    def generate_potential_room_location(self, guess_width, guess_height):
+        guess_room_x = random.randint(1, self.width - guess_width - 1)
+        guess_room_y = random.randint(1, self.height - guess_height - 1)
         return {
             "w": guess_width,
             "h": guess_height,
@@ -100,3 +108,80 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
     def get_center(self, coord, width_or_height):
         return coord + int(width_or_height / 2)
+
+    def generate_corridors(self):
+        connections = []
+        corridors = []
+        for source_room in self.rooms:
+            for destination_room in self.rooms:
+                #room position is already totally random.
+                directions = ["up", "down", "left", "right"]
+                random.shuffle(directions)
+                for direction in directions:
+                    corridor = self.generate_corridor(source_room, destination_room, direction)
+                    if corridor:
+                        connections.append((source_room, destination_room))
+                        corridors.append(corridor)
+                        #if self.all_rooms_connected(rooms, connections):
+                        #return corridors
+        return corridors
+
+
+    def generate_corridor(self, source, destination, direction):
+        start_pos = (-1, -1)
+        if direction == "up":
+            if source["y"] < 3:
+                return None
+            start_pos = (random.randint(source["x"], source["x"] + source["w"] - 1), source["y"] - 1)
+        elif direction == "down":
+            if source["y"] + source["h"] - 1 > self.height - 4:
+                return None
+            start_pos = (random.randint(source["x"], source["x"] + source["w"] - 1), source["y"] + source["h"])
+        elif direction == "left":
+            if source["x"] < 3:
+                return None
+            start_pos = (source["x"] - 1, random.randint(source["y"], source["y"] + source["h"] - 1))
+        elif direction == "right":
+            if source["x"] + source["w"] - 1 > self.width - 4:
+                return None
+            start_pos = (source["x"] + source["w"], random.randint(source["y"], source["y"] + source["h"] - 1))
+
+        visited = [[False for i in range(self.height)] for j in range(self.width)]
+        return self.pathfind_to_destination_room([start_pos], destination, visited)
+
+    def pathfind_to_destination_room(self, path, destination_room, visited):
+        if len(path) == 0:
+            return None
+        valid_neighbors = self.get_possible_corridor_neighbor_tiles(path[-1], destination_room, visited)
+        random.shuffle(valid_neighbors)
+        for neighbor in valid_neighbors:
+            path.append(neighbor)
+            visited[neighbor[0]][neighbor[1]] = True
+            path = self.pathfind_to_destination_room(path, destination_room, visited)
+        if self.get_id_of_room_adjacent_to_tile(path[-1]) == destination_room["id"]:
+            return path
+        else:
+            return path.pop()
+
+    def get_possible_corridor_neighbor_tiles(self, head_of_path, destination_room, visited):
+        all_neighbors = [
+            (head_of_path[0] - 1, head_of_path[1]),
+            (head_of_path[0] + 1, head_of_path[1]),
+            (head_of_path[0], head_of_path[1] - 1),
+            (head_of_path[0], head_of_path[1] + 1)]
+        return [neighbor for neighbor in all_neighbors if self.is_valid_neighbor_corridor_tile(neighbor, destination_room, visited)]
+
+    def is_valid_neighbor_corridor_tile(self, neighbor, destination_room, visited):
+        adjacent_room = self.get_id_of_room_adjacent_to_tile(neighbor)
+        if not adjacent_room or adjacent_room == destination_room["id"]:
+            return not visited[neighbor[0]][neighbor[1]]
+
+
+    def get_id_of_room_adjacent_to_tile(self, tile):
+        for room in self.rooms:
+            if ((tile[0] == room["x"] - 1 and tile[1] >= room["y"] and tile[1] <= room["y"] + room["h"] - 1) or #left adjacent
+                (tile[0] == room["x"] + room["w"] and tile[1] >= room["y"] and tile[1] <= room["y"] + room["h"] - 1) or #right adjacent
+                (tile[1] == room["y"] - 1 and tile[0] >= room["x"] and tile[0] <= room["x"] + room["w"] - 1) or #up adjacent
+                (tile[1] == room["y"] + room["h"] - 1 and tile[0] >= room["x"] and tile[0] <= room["x"] + room["w"] - 1)): #down adjacent
+                return room["id"]
+        return None
