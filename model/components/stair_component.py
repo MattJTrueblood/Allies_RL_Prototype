@@ -1,6 +1,6 @@
 from model.components.interfaces import Interactive
 from model.components.base_component import BaseComponent
-import model.dungeon as dungeon
+import model.game as game
 from view.canvas_tile import CanvasTile
 import tcod
 
@@ -14,8 +14,8 @@ class StairComponent(BaseComponent, Interactive):
         self.dest_floor = floor
 
     def interact(self, actor):
-        if actor == dungeon.player:
+        if actor == game.player:
             if self.is_up:
-                dungeon.go_up_to_floor(self.dest_floor)
+                game.go_up_to_floor(self.dest_floor)
             else:
-                dungeon.go_down_to_floor(self.dest_floor)
+                game.go_down_to_floor(self.dest_floor)

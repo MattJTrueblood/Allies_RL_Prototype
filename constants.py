@@ -2,4 +2,6 @@
 #Put global constants here.
 
 CONSOLE_WIDTH = 61
-CONSOLE_HEIGHT = 41
+CONSOLE_HEIGHT = 61
+
+MESSAGE_BOX_HEIGHT = 10

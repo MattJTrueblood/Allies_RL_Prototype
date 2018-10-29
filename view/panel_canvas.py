@@ -32,3 +32,8 @@ class PanelCanvas:
 
     def get_tile(self, x, y):
         return self.body[y][x]
+
+    def put_string(self, tile_x, tile_y, print_string, text_color, bgcolor=default_canvas_tile.bgcolor):
+        if len(print_string) <= self.width - tile_x:
+            for i, character in enumerate(print_string):
+                self.put_char(tile_x + i, tile_y, bgcolor, text_color, character)

@@ -1,6 +1,6 @@
 from model.components.interfaces import UpdateOnTick
 from model.components.base_component import BaseComponent
-import model.dungeon as dungeon
+import model.game as game
 import random
 
 class EnemyComponent(BaseComponent, UpdateOnTick):
@@ -15,8 +15,8 @@ class EnemyComponent(BaseComponent, UpdateOnTick):
     def move(self, dx, dy):
         new_x = self.parent_entity.x + dx
         new_y = self.parent_entity.y + dy
-        if dungeon.current_floor.can_move_into_tile(new_x, new_y):
-            for entity in dungeon.current_floor.get_entities():
+        if game.current_floor.can_move_into_tile(new_x, new_y):
+            for entity in game.current_floor.get_entities():
                 if entity.x == new_x and entity.y == new_y:
                     break
             self.parent_entity.x = new_x

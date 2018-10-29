@@ -1,6 +1,6 @@
 from controllers.base_controller import BasePanelController
 import tcod
-import model.dungeon as dungeon
+import model.game as game
 import core
 from view.panel_canvas import PanelCanvas
 from model.components.player_component import PlayerComponent
@@ -26,13 +26,13 @@ class GamePanelController(BasePanelController):
             for j in range(self.canvas.height):
                 ij_world = self.canvas_coord_to_world_coord(i, j)
                 if(self.world_coord_in_bounds(ij_world[0], ij_world[1])):
-                    tile_to_draw = dungeon.current_floor.get_tile(ij_world[0], ij_world[1]).canvas_tile
+                    tile_to_draw = game.current_floor.get_tile(ij_world[0], ij_world[1]).canvas_tile
                     self.canvas.put_tile(i, j, tile_to_draw)
                 else:
                     self.canvas.put_tile(i, j, PanelCanvas.default_canvas_tile)
 
         #Draw entities in viewport
-        for entity in dungeon.current_floor.get_entities():
+        for entity in game.current_floor.get_entities():
             visible_component= entity.get_component(VisibleComponent)
             if visible_component:
                 entity_xy_canvas = self.world_coord_to_canvas_coord(entity.x, entity.y)
@@ -46,17 +46,17 @@ class GamePanelController(BasePanelController):
 
 
     def canvas_coord_to_world_coord(self, x_canvas, y_canvas):
-        x_world = dungeon.player.x - self.panel_center_x + x_canvas
-        y_world = dungeon.player.y - self.panel_center_y + y_canvas
+        x_world = game.player.x - self.panel_center_x + x_canvas
+        y_world = game.player.y - self.panel_center_y + y_canvas
         return (x_world, y_world)
 
     def world_coord_to_canvas_coord(self, x_world, y_world):
-        x_canvas = x_world + self.panel_center_x - dungeon.player.x
-        y_canvas = y_world + self.panel_center_y - dungeon.player.y
+        x_canvas = x_world + self.panel_center_x - game.player.x
+        y_canvas = y_world + self.panel_center_y - game.player.y
         return (x_canvas, y_canvas)
 
     def world_coord_in_bounds(self, world_x, world_y):
-        return world_x >= 0 and world_x < dungeon.current_floor.width and world_y >= 0 and world_y < dungeon.current_floor.height
+        return world_x >= 0 and world_x < game.current_floor.width and world_y >= 0 and world_y < game.current_floor.height
 
     def canvas_coord_in_bounds(self, canvas_x, canvas_y):
         return canvas_x >= 0 and canvas_x < self.canvas.width and canvas_y >= 0 and canvas_y < self.canvas.height
@@ -71,13 +71,13 @@ class GamePanelController(BasePanelController):
     def handle_key_event(self, key_event):
         direction_to_move = GamePanelController.KEY_SWITCH.get(key_event.vk, None)
         if(direction_to_move):
-            dungeon.player.get_component(PlayerComponent).move(direction_to_move[0], direction_to_move[1])
+            game.player.get_component(PlayerComponent).move(direction_to_move[0], direction_to_move[1])
 
         if(key_event.vk == tcod.KEY_SPACE):
-            interactive_entity_next_to_player = next((entity for entity in dungeon.current_floor.get_entities()
-                if entity.get_component(Interactive) and entity.x == dungeon.player.x and entity.y == dungeon.player.y), None)
+            interactive_entity_next_to_player = next((entity for entity in game.current_floor.get_entities()
+                if entity.get_component(Interactive) and entity.x == game.player.x and entity.y == game.player.y), None)
             if interactive_entity_next_to_player:
-                interactive_entity_next_to_player.get_component(Interactive).interact(dungeon.player)
+                interactive_entity_next_to_player.get_component(Interactive).interact(game.player)
 
 
 
@@ -90,7 +90,7 @@ class GamePanelController(BasePanelController):
         self.redraw_canvas()
 
     def do_tick(self):
-        entities_to_update = [entity for entity in dungeon.current_floor.get_entities() if entity.get_component(UpdateOnTick)]
+        entities_to_update = [entity for entity in game.current_floor.get_entities() if entity.get_component(UpdateOnTick)]
         entities_to_update.sort(key=lambda x: x.get_component(UpdateOnTick).get_priority(), reverse = True)
         for entity in entities_to_update:
             component_to_update = entity.get_component(UpdateOnTick)

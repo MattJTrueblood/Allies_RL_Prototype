@@ -1,5 +1,5 @@
 from model.components.base_component import BaseComponent
-import model.dungeon as dungeon
+import model.game as game
 
 class HealthComponent(BaseComponent):
 
@@ -10,4 +10,5 @@ class HealthComponent(BaseComponent):
     def receiveAttack(self, attackPower):
         self.health -= attackPower
         if self.health <= 0:
-            dungeon.current_floor.remove_entity(self.parent_entity)
+            game.add_message(self.parent_entity.name + " was destroyed!")
+            game.current_floor.remove_entity(self.parent_entity)

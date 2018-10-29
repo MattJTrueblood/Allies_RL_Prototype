@@ -1,4 +1,4 @@
-import model.dungeon as dungeon
+import model.game as game
 from view.canvas_tile import CanvasTile
 from model.dungeon_tile import DungeonTile
 import tcod
@@ -14,6 +14,6 @@ class StairTile(DungeonTile):
 
     def on_interact(self):
         if(self.dir == "up"):
-            dungeon.go_to_prev_floor()
+            game.go_to_prev_floor()
         if(self.dir == "down"):
-            dungeon.go_to_next_floor()
+            game.go_to_next_floor()

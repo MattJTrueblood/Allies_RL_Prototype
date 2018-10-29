@@ -28,6 +28,8 @@ player.add_component(PlayerComponent(player))
 player.add_component(VisibleComponent(player, CanvasTile(None, tcod.Color(0, 255, 0), '@')))
 current_floor.add_entity(player)
 
+messages = ["Welcome!"]
+
 def go_up_to_floor(new_floor):
     change_floor(new_floor)
     put_player_on_downstair()
@@ -49,3 +51,6 @@ def put_player_on_upstair():
 def put_player_on_downstair():
     current_floor_down_stair = current_floor.get_entity("down_stair")
     player.get_component(PlayerComponent).set_position(current_floor_down_stair.x, current_floor_down_stair.y)
+
+def add_message(message):
+    messages.insert(0, message)
