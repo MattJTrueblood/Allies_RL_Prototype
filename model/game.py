@@ -1,5 +1,5 @@
 from model.floor import Floor
-from model.blank_floor_generator import BlankFloorGenerator
+from model.mapgen.basic_floor_generator import BasicFloorGenerator
 from model.components.player_component import PlayerComponent
 from model.components.stair_component import StairComponent
 from model.components.visible_component import VisibleComponent
@@ -11,7 +11,7 @@ import random
 NUM_FLOORS = 10
 
 floors = []
-generator = BlankFloorGenerator()
+generator = BasicFloorGenerator()
 for i in range(NUM_FLOORS):
     newfloor = generator.generate_floor(random.randint(15, 25), random.randint(15, 25))
     floors.append(newfloor)
