@@ -171,7 +171,8 @@ class BasicFloorGenerator(BaseFloorGenerator):
     def generate_corridor(self, source, destination):
         start_pos = (self.get_center(source["x"], source["w"]), self.get_center(source["y"], source["h"]))
         end_pos = (self.get_center(destination["x"], destination["w"]), self.get_center(destination["y"], destination["h"]))
-        return self.find_path(start_pos, end_pos)
+        basic_path = self.find_path(start_pos, end_pos)
+        return self.bend_path_around_obstacles(basic_path)
 
     def find_path(self, start_pos, end_pos):
         path = [start_pos]
@@ -200,6 +201,12 @@ class BasicFloorGenerator(BaseFloorGenerator):
                     return (node_1, node_2)
         print("no space for extra corridors")
         return None
+
+    def bend_path_around_obstacles(self, path):
+        #snip off start and end inside of rooms
+        #go through each tile.  For each contiguous portion that is invalid (check start and end)
+        #pathfind from start to end using a*.  replace the invalid section with the generated pathfound section.
+        return path
 
     def is_valid_corridor_tile(self, neighbor, destination_room, visited):
         if neighbor[0] > 0 and neighbor[0] < self.width - 1 and neighbor[1] > 0 and neighbor[1] < self.height:
