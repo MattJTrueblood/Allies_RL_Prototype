@@ -7,15 +7,16 @@ from model.components.stair_component import StairComponent
 from model.components.visible_component import VisibleComponent
 import tcod
 import random
+import math
 
 # Basic floor generator will generate rooms, corridors, doors, stairs, and monsters.
 
 class BasicFloorGenerator(BaseFloorGenerator):
 
     MIN_NUM_ROOMS = 5
-    MAX_NUM_ROOMS = 5
+    MAX_NUM_ROOMS = 12
 
-    MIN_ROOM_SIZE_RATIO = 0.15
+    MIN_ROOM_SIZE_RATIO = 0.05
     MAX_ROOM_SIZE_RATIO = 0.5
 
     MAX_GAP_BETWEEN_ROOMS = 3
@@ -114,102 +115,62 @@ class BasicFloorGenerator(BaseFloorGenerator):
         return coord + int(width_or_height / 2)
 
     def generate_corridors(self):
-        connections = []
-        corridors = []
-        for source_room in self.rooms:
-            for destination_room in self.rooms:
-                #room position is already totally random.
-                directions = ["up", "down", "left", "right"]
-                random.shuffle(directions)
-                for direction in directions:
-                    corridor = self.generate_corridor(source_room, destination_room, direction)
-                    if corridor:
-                        connections.append((self.rooms[0], self.rooms[1]))
-                        corridors.append(corridor)
-                        break
+        connection_tree = []
+        reached_nodes = [self.rooms[0]]
+        unreached_nodes = [room for room in self.rooms if room != self.rooms[0]]
 
+        while(len(unreached_nodes) > 0):
+            shortest_connection = (-1, -1)
+            shortest_distance = float("inf")
+            for reached_node in reached_nodes:
+                for unreached_node in unreached_nodes:
+                    dist = self.get_distance_between_room_centers(reached_node, unreached_node)
+                    if(dist < shortest_distance):
+                        shortest_distance = dist
+                        shortest_connection = (reached_node, unreached_node)
+            unreached_nodes.remove(shortest_connection[1])
+            reached_nodes.append(shortest_connection[1])
+            connection_tree.append(shortest_connection)
+
+        random.shuffle(connection_tree)
+        corridors = []
+        for connection in connection_tree:
+            corridors.append(self.generate_corridor(connection[0], connection[1]))
         return corridors
 
+    def get_distance_between_room_centers(self, room1, room2):
+        room1_cx = self.get_center(room1["x"], room1["w"])
+        room2_cx = self.get_center(room2["x"], room2["w"])
+        room1_cy = self.get_center(room1["y"], room1["h"])
+        room2_cy = self.get_center(room2["y"], room2["h"])
+        return math.sqrt(((room2_cx - room1_cx)**2) + ((room2_cy - room1_cy)**2))
 
-    def generate_corridor(self, source, destination, direction):
-        start_pos = (-1, -1)
-        if direction == "up":
-            if source["y"] < 3:
-                return None
-            start_pos = (random.randint(source["x"], source["x"] + source["w"] - 1), source["y"] - 1)
-        elif direction == "down":
-            if source["y"] + source["h"] - 1 > self.height - 4:
-                return None
-            start_pos = (random.randint(source["x"], source["x"] + source["w"] - 1), source["y"] + source["h"])
-        elif direction == "left":
-            if source["x"] < 3:
-                return None
-            start_pos = (source["x"] - 1, random.randint(source["y"], source["y"] + source["h"] - 1))
-        elif direction == "right":
-            if source["x"] + source["w"] - 1 > self.width - 4:
-                return None
-            start_pos = (source["x"] + source["w"], random.randint(source["y"], source["y"] + source["h"] - 1))
+    def generate_corridor(self, source, destination):
+        start_pos = (self.get_center(source["x"], source["w"]), self.get_center(source["y"], source["h"]))
+        end_pos = (self.get_center(destination["x"], destination["w"]), self.get_center(destination["y"], destination["h"]))
+        return self.find_path(start_pos, end_pos)
 
-        return self.find_path_to_destination_room(start_pos, destination)
+    def find_path(self, start_pos, end_pos):
+        path = [start_pos]
 
-    def find_path_to_destination_room(self, start_pos, destination_room):
-        closed_set = []
-        open_set = [start_pos]
-        came_from = {}
-        g_score = {}
-        g_score[start_pos] = 0
-        f_score = {}
-        f_score[start_pos] = self.get_distance_to_room(start_pos, destination_room)
+        leftmost, rightmost, topmost, bottommost = -1, -1, -1, -1
+        if(start_pos[0] <= end_pos[0]):
+            leftmost, rightmost = start_pos[0], end_pos[0]
+        else:
+            leftmost, rightmost = end_pos[0], start_pos[0]
+        if(start_pos[1] <= end_pos[1]):
+            topmost, bottommost = start_pos[1], end_pos[1]
+        else:
+            topmost, bottommost = end_pos[1], start_pos[1]
 
-        while(len(open_set) > 0):
-            current_tile = self.get_lowest_fscore_tile(open_set, f_score)
+        for x in range(leftmost, rightmost + 1):
+            path.append((x, start_pos[1]))
+        for y in range(topmost, bottommost + 1):
+            path.append((end_pos[0], y))
 
-            adjacent_room_to_current = self.get_id_of_room_adjacent_to_tile(current_tile)
-            if adjacent_room_to_current != None and adjacent_room_to_current == destination_room["id"] and not self.tile_on_corner_of_room(current_tile, destination_room):
-                return self.reconstruct_path(came_from, current_tile)
-
-            open_set.remove(current_tile)
-            closed_set.append(current_tile)
-
-            for neighbor in self.get_possible_corridor_neighbor_tiles(current_tile, destination_room, closed_set):
-                if neighbor in closed_set:
-                    continue
-
-                tentative_g_score = g_score[current_tile] + 1
-
-                if not (neighbor in open_set):
-                    open_set.append(neighbor)
-                elif tentative_g_score >= g_score[neighbor]:
-                    continue
-
-                came_from[neighbor] = current_tile
-                g_score[neighbor] = tentative_g_score
-                f_score[neighbor] = g_score[neighbor] + self.get_distance_to_room(neighbor, destination_room)
-
-        return []
-
-    def get_lowest_fscore_tile(self, open_set, f_score):
-        lowest_fscore_tile = open_set[0]
-        for tile in open_set:
-            if f_score.get(tile, float("inf")) < f_score.get(tile, float("inf")):
-                lowest_fscore_tile = tile
-        return lowest_fscore_tile
-
-    def reconstruct_path(self, came_from, current_tile):
-        path = [current_tile]
-        while(came_from.get(path[-1], False)):
-            path.append(came_from[path[-1]])
         return path
 
-    def get_possible_corridor_neighbor_tiles(self, head_of_path, destination_room, visited):
-        all_neighbors = [
-            (head_of_path[0] - 1, head_of_path[1]),
-            (head_of_path[0] + 1, head_of_path[1]),
-            (head_of_path[0], head_of_path[1] - 1),
-            (head_of_path[0], head_of_path[1] + 1)]
-        return [neighbor for neighbor in all_neighbors if self.is_valid_neighbor_corridor_tile(neighbor, destination_room, visited)]
-
-    def is_valid_neighbor_corridor_tile(self, neighbor, destination_room, visited):
+    def is_valid_corridor_tile(self, neighbor, destination_room, visited):
         if neighbor[0] > 0 and neighbor[0] < self.width - 1 and neighbor[1] > 0 and neighbor[1] < self.height:
             if not self.tile_inside_room(neighbor):
                 adjacent_room = self.get_id_of_room_adjacent_to_tile(neighbor)
