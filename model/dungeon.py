@@ -1,5 +1,5 @@
 from model.floor import Floor
-from model.mapgen.basic_floor_generator import BasicFloorGenerator
+from model.blank_floor_generator import BlankFloorGenerator
 from model.components.player_component import PlayerComponent
 from model.components.stair_component import StairComponent
 from model.components.visible_component import VisibleComponent
@@ -8,12 +8,12 @@ from view.canvas_tile import CanvasTile
 import tcod
 import random
 
-NUM_FLOORS = 10
+NUM_FLOORS = 1
 
 floors = []
-generator = BasicFloorGenerator()
+#generator = BlankFloorGenerator()
 for i in range(NUM_FLOORS):
-    newfloor = generator.generate_floor(random.randint(10, 20), random.randint(10, 20))
+    newfloor = generator.generate_floor(random.randint(15, 25), random.randint(15, 25))
     floors.append(newfloor)
 
 for i in range(NUM_FLOORS):
@@ -27,8 +27,6 @@ player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.
 player.add_component(PlayerComponent(player))
 player.add_component(VisibleComponent(player, CanvasTile(None, tcod.Color(0, 255, 0), '@')))
 current_floor.add_entity(player)
-
-messages = ["Welcome!"]
 
 def go_up_to_floor(new_floor):
     change_floor(new_floor)
@@ -51,6 +49,3 @@ def put_player_on_upstair():
 def put_player_on_downstair():
     current_floor_down_stair = current_floor.get_entity("down_stair")
     player.get_component(PlayerComponent).set_position(current_floor_down_stair.x, current_floor_down_stair.y)
-
-def add_message(message):
-    messages.insert(0, message)
