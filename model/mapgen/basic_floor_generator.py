@@ -28,9 +28,6 @@ class BasicFloorGenerator(BaseFloorGenerator):
         #create rooms
         self.rooms = self.generate_room_locations()
 
-        print("rooms:")
-        print(self.rooms)
-
         #Fill in rooms
         for room in self.rooms:
             for i in range(room["x"], room["x"] + room["w"]):
@@ -117,18 +114,18 @@ class BasicFloorGenerator(BaseFloorGenerator):
     def generate_corridors(self):
         connections = []
         corridors = []
-        for source_room in self.rooms:
-            for destination_room in self.rooms:
-                #room position is already totally random.
-                directions = ["up", "down", "left", "right"]
-                random.shuffle(directions)
-                for direction in directions:
-                    corridor = self.generate_corridor(source_room, destination_room, direction)
-                    if corridor:
-                        connections.append((source_room, destination_room))
-                        corridors.append(corridor)
-                        #if self.all_rooms_connected(rooms, connections):
-                        #return corridors
+        #for source_room in self.rooms:
+            #for destination_room in self.rooms:
+        #room position is already totally random.
+        directions = ["up", "down", "left", "right"]
+        random.shuffle(directions)
+        for direction in directions:
+            corridor = self.generate_corridor(self.rooms[0], self.rooms[1], direction)
+            if corridor:
+                connections.append((self.rooms[0], self.rooms[1]))
+                corridors.append(corridor)
+                #if self.all_rooms_connected(rooms, connections):
+                #return corridors
         return corridors
 
 
@@ -157,8 +154,6 @@ class BasicFloorGenerator(BaseFloorGenerator):
     def pathfind_to_destination_room(self, path, destination_room, visited):
         if len(path) == 0:
             return None
-        if len(path) > 1:
-            return path
         valid_neighbors = self.get_possible_corridor_neighbor_tiles(path[-1], destination_room, visited)
         random.shuffle(valid_neighbors)
         for neighbor in valid_neighbors:
@@ -178,11 +173,19 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
     def is_valid_neighbor_corridor_tile(self, neighbor, destination_room, visited):
         if neighbor[0] > 0 and neighbor[0] < self.width - 1 and neighbor[1] > 0 and neighbor[1] < self.height:
-            adjacent_room = self.get_id_of_room_adjacent_to_tile(neighbor)
-            if not adjacent_room or adjacent_room == destination_room["id"]:
-                return not visited[neighbor[0]][neighbor[1]]
+            if not self.tile_inside_room(neighbor):
+                adjacent_room = self.get_id_of_room_adjacent_to_tile(neighbor)
+                if adjacent_room == None or adjacent_room == destination_room["id"]:
+                    print(str(neighbor) + " is valid, either nonadjacent or adjacent to " + str(destination_room["id"]))
+                    return not visited[neighbor[0]][neighbor[1]]
+        print(str(neighbor) + " is invalid")
         return False
 
+    def tile_inside_room(self, tile):
+        for room in self.rooms:
+            if tile[0] >= room["x"] and tile[1] >= room["y"] and tile[0] < room["x"] + room["w"] and tile[1] < room["y"] + room["h"]:
+                return True
+        return False
 
     def get_id_of_room_adjacent_to_tile(self, tile):
         for room in self.rooms:
@@ -190,6 +193,6 @@ class BasicFloorGenerator(BaseFloorGenerator):
                 (tile[0] == room["x"] + room["w"] and tile[1] >= room["y"] and tile[1] <= room["y"] + room["h"] - 1) or #right adjacent
                 (tile[1] == room["y"] - 1 and tile[0] >= room["x"] and tile[0] <= room["x"] + room["w"] - 1) or #up adjacent
                 (tile[1] == room["y"] + room["h"] and tile[0] >= room["x"] and tile[0] <= room["x"] + room["w"] - 1)): #down adjacent
-                #print(str(tile) + " adjacent to " + str(room))
+                print(str(tile) + " is ajacent to " + str(room["id"]))
                 return room["id"]
         return None
