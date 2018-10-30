@@ -16,10 +16,15 @@ class BasicFloorGenerator(BaseFloorGenerator):
     MIN_NUM_ROOMS = 5
     MAX_NUM_ROOMS = 12
 
-    MIN_ROOM_SIZE_RATIO = 0.05
-    MAX_ROOM_SIZE_RATIO = 0.5
+    MIN_ROOM_SIZE_RATIO = 0.1
+    MAX_ROOM_SIZE_RATIO = 0.4
 
     MAX_GAP_BETWEEN_ROOMS = 3
+
+    MIN_WIDTH_TO_HEIGHT_ROOM_RATIO = 0.50
+
+    MIN_EXTRA_CORRIDORS = 1
+    MAX_EXTRA_CORRIDORS = 3
 
     def generate_floor(self, width, height):
         self.width = width
@@ -28,39 +33,41 @@ class BasicFloorGenerator(BaseFloorGenerator):
         tiles = [[DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), '#'), True) for i in range(height)] for j in range(width)]
         #create rooms
         self.rooms = self.generate_room_locations()
-
-        #Fill in rooms
-        for room in self.rooms:
-            for i in range(room["x"], room["x"] + room["w"]):
-                for j in range(room["y"], room["y"] + room["h"]):
-                    tiles[i][j].canvas_tile.character = '.'
-                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(50, 50, 50)
-                    tiles[i][j].is_obstacle = False
         #create corridors
         corridors = self.generate_corridors()
+
+        #Fill in corridors
         for corridor in corridors:
             for coord in corridor:
-                tiles[coord[0]][coord[1]].canvas_tile.character = "*"
-                tiles[coord[0]][coord[1]].canvas_tile.bgcolor = tcod.Color(50, 50, 50)
-                tiles[coord[0]][coord[1]].canvas_tile.fgcolor = tcod.Color(255, 255, 0)
+                tiles[coord[0]][coord[1]].canvas_tile.character = " "
+                tiles[coord[0]][coord[1]].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
                 tiles[coord[0]][coord[1]].is_obstacle = False
+        #Fill in rooms
+        for room_num, room in enumerate(self.rooms):
+            for i in range(room["x"], room["x"] + room["w"]):
+                for j in range(room["y"], room["y"] + room["h"]):
+                    tiles[i][j].canvas_tile.character = str(room_num)[0]
+                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
+                    tiles[i][j].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
+                    tiles[i][j].is_obstacle = False
 
+        #return object
         floor = Floor(width, height, tiles)
 
         #Stairs
         up_stair_x = random.randint(self.rooms[0]["x"], self.rooms[0]["x"] + self.rooms[0]["w"] - 1)
         up_stair_y = random.randint(self.rooms[0]["y"], self.rooms[0]["y"] + self.rooms[0]["h"] - 1)
         while True:
-            down_stair_x = random.randint(self.rooms[0]["x"], self.rooms[0]["x"] + self.rooms[0]["w"] - 1)
-            down_stair_y = random.randint(self.rooms[0]["y"], self.rooms[0]["y"] + self.rooms[0]["h"] - 1)
+            down_stair_x = random.randint(self.rooms[-1]["x"], self.rooms[-1]["x"] + self.rooms[-1]["w"] - 1)
+            down_stair_y = random.randint(self.rooms[-1]["y"], self.rooms[-1]["y"] + self.rooms[-1]["h"] - 1)
             if down_stair_x != up_stair_x or down_stair_y != up_stair_y:
                 break
         up_stair = Entity("up_stair", up_stair_x, up_stair_y)
         down_stair = Entity("down_stair", down_stair_x, down_stair_y)
         up_stair.add_component(StairComponent(up_stair, True))
-        up_stair.add_component(VisibleComponent(up_stair, CanvasTile(None, tcod.Color(255, 0, 0), '<')))
+        up_stair.add_component(VisibleComponent(up_stair, CanvasTile(None, tcod.Color(0, 0, 255), '<')))
         down_stair.add_component(StairComponent(up_stair, False))
-        down_stair.add_component(VisibleComponent(up_stair, CanvasTile(None, tcod.Color(255, 0, 0), '>')))
+        down_stair.add_component(VisibleComponent(up_stair, CanvasTile(None, tcod.Color(0, 0, 255), '>')))
         floor.add_entity(up_stair)
         floor.add_entity(down_stair)
 
@@ -76,11 +83,11 @@ class BasicFloorGenerator(BaseFloorGenerator):
         ideal_num_rooms = random.randint(BasicFloorGenerator.MIN_NUM_ROOMS, BasicFloorGenerator.MAX_NUM_ROOMS)
 
         guess_counter = 0 #if you have 100 failed placement attempts, give up and use what you have.
-        while guess_counter < 100 and len(rooms) < ideal_num_rooms:
+        while guess_counter < 1000 and len(rooms) < ideal_num_rooms:
             guess_room_width = random.randint(min_room_width, max_room_width)
             guess_room_height = random.randint(min_room_height, max_room_height)
             room_guess = self.generate_potential_room_location(guess_room_width, guess_room_height)
-            if self.is_room_location_valid(room_guess, rooms):
+            if self.is_room_location_valid(room_guess, rooms) and self.is_room_in_ratio_bounds(room_guess):
                 room_guess["id"] = len(rooms)
                 rooms.append(room_guess)
                 guess_counter = 0
@@ -114,11 +121,15 @@ class BasicFloorGenerator(BaseFloorGenerator):
     def get_center(self, coord, width_or_height):
         return coord + int(width_or_height / 2)
 
+    def is_room_in_ratio_bounds(self, room):
+        return min(room["w"], room["h"]) / max(room["w"], room["h"]) >= BasicFloorGenerator.MIN_WIDTH_TO_HEIGHT_ROOM_RATIO
+
     def generate_corridors(self):
         connection_tree = []
         reached_nodes = [self.rooms[0]]
         unreached_nodes = [room for room in self.rooms if room != self.rooms[0]]
 
+        #generate minimum spanning tree between rooms
         while(len(unreached_nodes) > 0):
             shortest_connection = (-1, -1)
             shortest_distance = float("inf")
@@ -132,7 +143,19 @@ class BasicFloorGenerator(BaseFloorGenerator):
             reached_nodes.append(shortest_connection[1])
             connection_tree.append(shortest_connection)
 
-        random.shuffle(connection_tree)
+        #add a few extra connections
+        extra_connections = random.randint(BasicFloorGenerator.MIN_EXTRA_CORRIDORS, BasicFloorGenerator.MAX_EXTRA_CORRIDORS)
+        print(extra_connections)
+        for extra in range(extra_connections):
+            print("making a random connection")
+            random.shuffle(reached_nodes)
+            extra_connection = self.get_random_nonexistant_connection(reached_nodes, connection_tree)
+            if not extra_connection:
+                print("no connections possible")
+                break
+            print("adding connection: " + str(extra_connection))
+            connection_tree.append(extra_connection)
+
         corridors = []
         for connection in connection_tree:
             corridors.append(self.generate_corridor(connection[0], connection[1]))
@@ -169,6 +192,14 @@ class BasicFloorGenerator(BaseFloorGenerator):
             path.append((end_pos[0], y))
 
         return path
+
+    def get_random_nonexistant_connection(self, nodes, connection_tree):
+        for node_1 in nodes:
+            for node_2 in nodes:
+                if not ((node_1, node_2) in connection_tree or (node_2, node_1) in connection_tree) and not node_1 == node_2:
+                    return (node_1, node_2)
+        print("no space for extra corridors")
+        return None
 
     def is_valid_corridor_tile(self, neighbor, destination_room, visited):
         if neighbor[0] > 0 and neighbor[0] < self.width - 1 and neighbor[1] > 0 and neighbor[1] < self.height:

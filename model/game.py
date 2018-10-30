@@ -25,7 +25,7 @@ for i in range(NUM_FLOORS):
 current_floor = floors[0]
 player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.get_entity("up_stair").y, True)
 player.add_component(PlayerComponent(player))
-player.add_component(VisibleComponent(player, CanvasTile(None, tcod.Color(0, 255, 0), '@')))
+player.add_component(VisibleComponent(player, CanvasTile(None, tcod.Color(0, 100, 0), '@')))
 current_floor.add_entity(player)
 
 messages = ["Welcome!"]
