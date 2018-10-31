@@ -13,8 +13,8 @@ import math
 
 class BasicFloorGenerator(BaseFloorGenerator):
 
-    MIN_NUM_ROOMS = 5
-    MAX_NUM_ROOMS = 12
+    MIN_NUM_ROOMS = 3
+    MAX_NUM_ROOMS = 3
 
     MIN_ROOM_SIZE_RATIO = 0.1
     MAX_ROOM_SIZE_RATIO = 0.4
@@ -24,7 +24,7 @@ class BasicFloorGenerator(BaseFloorGenerator):
     MIN_WIDTH_TO_HEIGHT_ROOM_RATIO = 0.50
 
     MIN_EXTRA_CORRIDORS = 1
-    MAX_EXTRA_CORRIDORS = 3
+    MAX_EXTRA_CORRIDORS = 1
 
     def generate_floor(self, width, height):
         self.width = width
@@ -166,15 +166,18 @@ class BasicFloorGenerator(BaseFloorGenerator):
         room2_cx = self.get_center(room2["x"], room2["w"])
         room1_cy = self.get_center(room1["y"], room1["h"])
         room2_cy = self.get_center(room2["y"], room2["h"])
-        return math.sqrt(((room2_cx - room1_cx)**2) + ((room2_cy - room1_cy)**2))
+        return self.get_distance_between_tiles((room1_cx, room1_cy), (room2_cx, room2_cy))
+
+    def get_distance_between_tiles(self, tile1, tile2):
+        return math.sqrt(((tile2[0] - tile1[0])**2) + (tile2[1] - tile1[1])**2)
 
     def generate_corridor(self, source, destination):
         start_pos = (self.get_center(source["x"], source["w"]), self.get_center(source["y"], source["h"]))
         end_pos = (self.get_center(destination["x"], destination["w"]), self.get_center(destination["y"], destination["h"]))
-        basic_path = self.find_path(start_pos, end_pos)
+        basic_path = self.generate_L_path(start_pos, end_pos)
         return self.bend_path_around_obstacles(basic_path)
 
-    def find_path(self, start_pos, end_pos):
+    def generate_L_path(self, start_pos, end_pos):
         path = [start_pos]
 
         leftmost, rightmost, topmost, bottommost = -1, -1, -1, -1
@@ -203,17 +206,105 @@ class BasicFloorGenerator(BaseFloorGenerator):
         return None
 
     def bend_path_around_obstacles(self, path):
-        #snip off start and end inside of rooms
-        #go through each tile.  For each contiguous portion that is invalid (check start and end)
-        #pathfind from start to end using a*.  replace the invalid section with the generated pathfound section.
+        for tile in list(path):
+            if self.tile_inside_room(tile):
+                path.remove(tile)
+            else:
+                break
+
+        for tile in list(reversed(path)):
+            if self.tile_inside_room(tile):
+                path.remove(tile)
+            else:
+                break
+
+        if(len(path) < 3):
+            return path
+
+        #find all invalid contiguous sections of the path.  Use pathfind algorithm
+        #to find a valid path between the valid portions and replace the invalid section with that
+        invalid_sublist = []
+        in_invalid_segment = False
+        last_valid_tile_index = 0
+        for i, tile in enumerate(path[1:-1]):
+            current_tile_is_valid = self.is_valid_corridor_tile(tile)
+            if in_invalid_segment:
+                if current_tile_is_valid:
+                    invalid_sublist.append(tile)
+                else:
+                    in_invalid_segment = False
+                    print("replacing " + str(path[last_valid_tile_index]) + " to " + str(tile))
+                    valid_replacement_path = self.find_valid_corridor_path(path[last_valid_tile_index], tile)
+                    print("replacement: " + str(valid_replacement_path))
+                    path[last_valid_tile_index + 1 : i] = valid_replacement_path
+            else:
+                if not current_tile_is_valid:
+                    in_invalid_segment = True
+                    invalid_sublist.append(tile)
+                    last_valid_tile = i - 1
+
         return path
 
-    def is_valid_corridor_tile(self, neighbor, destination_room, visited):
-        if neighbor[0] > 0 and neighbor[0] < self.width - 1 and neighbor[1] > 0 and neighbor[1] < self.height:
-            if not self.tile_inside_room(neighbor):
-                adjacent_room = self.get_id_of_room_adjacent_to_tile(neighbor)
-                if adjacent_room == None or adjacent_room == destination_room["id"]:
-                    return not neighbor in visited
+    def find_valid_corridor_path(self, start_tile, end_tile):
+        closed_set = []
+        open_set = [start_tile]
+        came_from = {}
+        g_score = {}
+        g_score[start_tile] = 0
+        f_score = {}
+        f_score[start_tile] = self.get_distance_between_tiles(start_tile, end_tile)
+
+        while len(open_set) > 0:
+            current = self.get_lowest_fscore_tile(open_set, f_score)
+            if(current == end_tile):
+                return self.reconstruct_path(came_from, current)
+
+            open_set.remove(current)
+            closed_set.append(current)
+
+            for neighbor in self.get_neighbor_tiles(current):
+                if(neighbor in closed_set):
+                    continue
+
+                tentative_g_score = g_score[current] + 1
+
+                if not (neighbor in open_set):
+                    open_set.append(neighbor)
+                elif tentative_g_score >= g_score[neighbor]:
+                    continue
+
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = g_score[neighbor] + self.get_distance_between_tiles(neighbor, end_tile)
+        return []
+
+
+    def get_lowest_fscore_tile(self, open_set, f_score):
+        lowest_fscore_tile = open_set[0]
+        for tile in open_set:
+            if f_score.get(tile, float("inf")) < f_score.get(tile, float("inf")):
+                lowest_fscore_tile = tile
+        return lowest_fscore_tile
+
+    def reconstruct_path(self, came_from, current_tile):
+        path = [current_tile]
+        while(came_from.get(path[-1], False)):
+            path.append(came_from[path[-1]])
+        return path
+
+    def get_neighbor_tiles(self, current_tile):
+        neighbors = []
+        neighbors.append((current_tile[0] + 1, current_tile[1]))
+        neighbors.append((current_tile[0] - 1, current_tile[1]))
+        neighbors.append((current_tile[0], current_tile[1] + 1))
+        neighbors.append((current_tile[0], current_tile[1] - 1))
+        return [neighbor for neighbor in neighbors if self.is_valid_corridor_tile(neighbor)]
+
+    def is_valid_corridor_tile(self, tile):
+        if tile[0] > 0 and tile[0] < self.width - 1 and tile[1] > 0 and tile[1] < self.height:
+            if not self.tile_inside_room(tile):
+                adjacent_room = self.get_id_of_room_adjacent_to_tile(tile)
+                return adjacent_room == None
         return False
 
     def tile_inside_room(self, tile):
