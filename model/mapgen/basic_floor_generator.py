@@ -26,6 +26,8 @@ class BasicFloorGenerator(BaseFloorGenerator):
     MIN_EXTRA_CORRIDORS = 3
     MAX_EXTRA_CORRIDORS = 3
 
+    CHANCE_OF_DOOR_AT_END_OF_CORRIDOR = 1.00
+
     def generate_floor(self, width, height):
         self.width = width
         self.height = height
@@ -39,15 +41,15 @@ class BasicFloorGenerator(BaseFloorGenerator):
         #Fill in corridors
         for corridor in corridors:
             for coord in corridor:
-                tiles[coord[0]][coord[1]].canvas_tile.character = " "
-                tiles[coord[0]][coord[1]].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
+                tiles[coord[0]][coord[1]].canvas_tile.character = "."
+                tiles[coord[0]][coord[1]].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
                 tiles[coord[0]][coord[1]].is_obstacle = False
 
         #Fill in rooms
         for room_num, room in enumerate(self.rooms):
             for i in range(room["x"], room["x"] + room["w"]):
                 for j in range(room["y"], room["y"] + room["h"]):
-                    tiles[i][j].canvas_tile.character = str(room_num)[0]
+                    tiles[i][j].canvas_tile.character = '.'
                     tiles[i][j].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
                     tiles[i][j].is_obstacle = False
 
@@ -55,11 +57,34 @@ class BasicFloorGenerator(BaseFloorGenerator):
         for i in range(self.width):
             for j in range(self.height):
                 if not self.is_valid_corridor_tile((i, j)):
-                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(100, 0, 0)
+                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
                 if i == 0:
                     tiles[i][j].canvas_tile.character = str(j)[-1]
                 if j == 0:
                     tiles[i][j].canvas_tile.character = str(i)[-1]
+
+        #Fixing entrances and exist to rooms so there are no doors directly adjacent to each other
+        no_door_needed_tiles = []
+        door_needed_tiles = []
+        for corridor in corridors:
+            if random.random() < BasicFloorGenerator.CHANCE_OF_DOOR_AT_END_OF_CORRIDOR:
+                if corridor[0] not in no_door_needed_tiles:
+                    door_needed_tiles.append(corridor[0])
+                if corridor[-1] not in no_door_needed_tiles:
+                    door_needed_tiles.append(corridor[-1])
+                potential_no_door_tiles = ((self.get_neighbor_tiles(corridor[0]) if not corridor[0] in no_door_needed_tiles else []) +
+                    (self.get_neighbor_tiles(corridor[-1]) if not corridor[-1] in no_door_needed_tiles else []))
+                for other_corridor in corridors:
+                    if other_corridor[0] in potential_no_door_tiles:
+                        no_door_needed_tiles.append(other_corridor[0])
+                    if other_corridor[-1] in potential_no_door_tiles:
+                        no_door_needed_tiles.append(other_corridor[-1])
+
+        #filling in unneeded tiles
+        for tile in no_door_needed_tiles:
+            tiles[tile[0]][tile[1]].canvas_tile.character = '#'
+            tiles[tile[0]][tile[1]].canvas_tile.fgcolor = tcod.Color(255, 255, 255)
+            tiles[tile[0]][tile[1]].is_obstacle = True
 
         #return object
         floor = Floor(width, height, tiles)
@@ -234,32 +259,11 @@ class BasicFloorGenerator(BaseFloorGenerator):
         if(len(path) < 3):
             return path
 
-        #find all invalid contiguous sections of the path.  Use pathfind algorithm
-        #to find a valid path between the valid portions and replace the invalid section with that
-        invalid_sublist = []
-        in_invalid_segment = False
-        last_valid_tile_index = 0
-        print("start new path")
-        for i, tile in enumerate(path[1:]):
-            current_tile_is_valid = self.is_valid_corridor_tile(tile) or tile == path[-1]
-            print("tile: " + str(tile) + " is " + str(current_tile_is_valid))
-            if in_invalid_segment:
-                if not current_tile_is_valid:
-                    invalid_sublist.append(tile)
-                else:
-                    in_invalid_segment = False
-                    print("replacing " + str(path[last_valid_tile_index]) + " to " + str(tile))
-                    valid_replacement_path = self.find_valid_corridor_path(path[last_valid_tile_index], tile)
-                    print("replacement: " + str(valid_replacement_path))
-                    path[last_valid_tile_index : i + 1] = valid_replacement_path
-                    invalid_sublist = []
-            else:
-                if not current_tile_is_valid:
-                    in_invalid_segment = True
-                    invalid_sublist.append(tile)
-                    last_valid_tile_index = i
-
+        for i, tile in enumerate(path[1:-1]):
+            if not self.is_valid_corridor_tile(tile) and tile != path[-1]:
+                return self.find_valid_corridor_path(path[0], path[-1])
         return path
+
 
     def find_valid_corridor_path(self, start_tile, end_tile):
         closed_set = []
