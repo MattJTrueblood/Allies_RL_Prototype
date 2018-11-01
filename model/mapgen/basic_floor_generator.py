@@ -13,8 +13,8 @@ import math
 
 class BasicFloorGenerator(BaseFloorGenerator):
 
-    MIN_NUM_ROOMS = 3
-    MAX_NUM_ROOMS = 3
+    MIN_NUM_ROOMS = 5
+    MAX_NUM_ROOMS = 13
 
     MIN_ROOM_SIZE_RATIO = 0.1
     MAX_ROOM_SIZE_RATIO = 0.4
@@ -23,8 +23,8 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
     MIN_WIDTH_TO_HEIGHT_ROOM_RATIO = 0.50
 
-    MIN_EXTRA_CORRIDORS = 1
-    MAX_EXTRA_CORRIDORS = 1
+    MIN_EXTRA_CORRIDORS = 3
+    MAX_EXTRA_CORRIDORS = 3
 
     def generate_floor(self, width, height):
         self.width = width
@@ -42,14 +42,24 @@ class BasicFloorGenerator(BaseFloorGenerator):
                 tiles[coord[0]][coord[1]].canvas_tile.character = " "
                 tiles[coord[0]][coord[1]].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
                 tiles[coord[0]][coord[1]].is_obstacle = False
+
         #Fill in rooms
         for room_num, room in enumerate(self.rooms):
             for i in range(room["x"], room["x"] + room["w"]):
                 for j in range(room["y"], room["y"] + room["h"]):
                     tiles[i][j].canvas_tile.character = str(room_num)[0]
-                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
                     tiles[i][j].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
                     tiles[i][j].is_obstacle = False
+
+        #Test stuff
+        for i in range(self.width):
+            for j in range(self.height):
+                if not self.is_valid_corridor_tile((i, j)):
+                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(100, 0, 0)
+                if i == 0:
+                    tiles[i][j].canvas_tile.character = str(j)[-1]
+                if j == 0:
+                    tiles[i][j].canvas_tile.character = str(i)[-1]
 
         #return object
         floor = Floor(width, height, tiles)
@@ -178,22 +188,25 @@ class BasicFloorGenerator(BaseFloorGenerator):
         return self.bend_path_around_obstacles(basic_path)
 
     def generate_L_path(self, start_pos, end_pos):
-        path = [start_pos]
+        path = []
 
-        leftmost, rightmost, topmost, bottommost = -1, -1, -1, -1
-        if(start_pos[0] <= end_pos[0]):
-            leftmost, rightmost = start_pos[0], end_pos[0]
+        if start_pos[0] <= end_pos[0]:
+            #travel east
+            for x in range(start_pos[0], end_pos[0] + 1):
+                path.append((x, start_pos[1]))
         else:
-            leftmost, rightmost = end_pos[0], start_pos[0]
-        if(start_pos[1] <= end_pos[1]):
-            topmost, bottommost = start_pos[1], end_pos[1]
-        else:
-            topmost, bottommost = end_pos[1], start_pos[1]
+            #travel west
+            for x in reversed(range(end_pos[0], start_pos[0] + 1)):
+                path.append((x, start_pos[1]))
 
-        for x in range(leftmost, rightmost + 1):
-            path.append((x, start_pos[1]))
-        for y in range(topmost, bottommost + 1):
-            path.append((end_pos[0], y))
+        if start_pos[1] <= end_pos[1]:
+            #travel south
+            for y in range(start_pos[1], end_pos[1] + 1):
+                path.append((end_pos[0], y))
+        else:
+            #travel north
+            for y in reversed(range(end_pos[1], start_pos[1] + 1)):
+                path.append((end_pos[0], y))
 
         return path
 
@@ -226,22 +239,25 @@ class BasicFloorGenerator(BaseFloorGenerator):
         invalid_sublist = []
         in_invalid_segment = False
         last_valid_tile_index = 0
-        for i, tile in enumerate(path[1:-1]):
-            current_tile_is_valid = self.is_valid_corridor_tile(tile)
+        print("start new path")
+        for i, tile in enumerate(path[1:]):
+            current_tile_is_valid = self.is_valid_corridor_tile(tile) or tile == path[-1]
+            print("tile: " + str(tile) + " is " + str(current_tile_is_valid))
             if in_invalid_segment:
-                if current_tile_is_valid:
+                if not current_tile_is_valid:
                     invalid_sublist.append(tile)
                 else:
                     in_invalid_segment = False
                     print("replacing " + str(path[last_valid_tile_index]) + " to " + str(tile))
                     valid_replacement_path = self.find_valid_corridor_path(path[last_valid_tile_index], tile)
                     print("replacement: " + str(valid_replacement_path))
-                    path[last_valid_tile_index + 1 : i] = valid_replacement_path
+                    path[last_valid_tile_index : i + 1] = valid_replacement_path
+                    invalid_sublist = []
             else:
                 if not current_tile_is_valid:
                     in_invalid_segment = True
                     invalid_sublist.append(tile)
-                    last_valid_tile = i - 1
+                    last_valid_tile_index = i
 
         return path
 
@@ -263,7 +279,7 @@ class BasicFloorGenerator(BaseFloorGenerator):
             closed_set.append(current)
 
             for neighbor in self.get_neighbor_tiles(current):
-                if(neighbor in closed_set):
+                if (not self.is_valid_corridor_tile(neighbor) and not neighbor == end_tile) or neighbor in closed_set:
                     continue
 
                 tentative_g_score = g_score[current] + 1
@@ -298,13 +314,14 @@ class BasicFloorGenerator(BaseFloorGenerator):
         neighbors.append((current_tile[0] - 1, current_tile[1]))
         neighbors.append((current_tile[0], current_tile[1] + 1))
         neighbors.append((current_tile[0], current_tile[1] - 1))
-        return [neighbor for neighbor in neighbors if self.is_valid_corridor_tile(neighbor)]
+        return neighbors
 
     def is_valid_corridor_tile(self, tile):
-        if tile[0] > 0 and tile[0] < self.width - 1 and tile[1] > 0 and tile[1] < self.height:
+        if tile[0] > 0 and tile[0] < self.width - 1 and tile[1] > 0 and tile[1] < self.height - 1:
             if not self.tile_inside_room(tile):
                 adjacent_room = self.get_id_of_room_adjacent_to_tile(tile)
-                return adjacent_room == None
+                if adjacent_room == None:
+                    return True
         return False
 
     def tile_inside_room(self, tile):
