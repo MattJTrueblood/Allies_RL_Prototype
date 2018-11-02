@@ -15,11 +15,11 @@ import math
 
 class BasicFloorGenerator(BaseFloorGenerator):
 
-    MIN_NUM_ROOMS = 5
+    MIN_NUM_ROOMS = 13
     MAX_NUM_ROOMS = 13
 
     MIN_ROOM_SIZE_RATIO = 0.1
-    MAX_ROOM_SIZE_RATIO = 0.4
+    MAX_ROOM_SIZE_RATIO = 0.5
 
     MIN_GAP_BETWEEN_ROOMS = 4
 
@@ -129,20 +129,16 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
         ideal_num_rooms = random.randint(BasicFloorGenerator.MIN_NUM_ROOMS, BasicFloorGenerator.MAX_NUM_ROOMS)
 
-        print("generating ideally " + str(ideal_num_rooms) + " rooms")
-
         guess_counter = 0 #if you have 100 failed placement attempts, give up and use what you have.
         while guess_counter < BasicFloorGenerator.MAX_NUM_ROOM_GEN_GUESSES and len(rooms) < ideal_num_rooms:
-            guess_room_width = random.randint(min_room_width, max_room_width)
-            guess_room_height = random.randint(min_room_height, max_room_height)
+            guess_room_width = random.randint(min_room_width, (max_room_width - int((max_room_width - min_room_width) * (guess_counter / BasicFloorGenerator.MAX_NUM_ROOM_GEN_GUESSES))))
+            guess_room_height = random.randint(min_room_height, (max_room_height - int((max_room_height - min_room_height) * (guess_counter / BasicFloorGenerator.MAX_NUM_ROOM_GEN_GUESSES))))
             room_guess = self.generate_potential_room_location(guess_room_width, guess_room_height)
             if self.is_room_location_valid(room_guess, rooms) and self.is_room_in_ratio_bounds(room_guess):
                 room_guess["id"] = len(rooms)
                 rooms.append(room_guess)
-                guess_counter = 0
+                guess_counter = int(guess_counter / 2)
             guess_counter += 1
-
-        print("actually generated " + str(len(rooms)) + " rooms")
 
         return rooms
 
