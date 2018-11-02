@@ -5,6 +5,8 @@ from model.floor import Floor
 from model.entity import Entity
 from model.components.stair_component import StairComponent
 from model.components.visible_component import VisibleComponent
+from model.components.door_component import DoorComponent
+from model.components.tags import ObstructsMovement
 import tcod
 import random
 import math
@@ -19,9 +21,11 @@ class BasicFloorGenerator(BaseFloorGenerator):
     MIN_ROOM_SIZE_RATIO = 0.1
     MAX_ROOM_SIZE_RATIO = 0.4
 
-    MAX_GAP_BETWEEN_ROOMS = 3
+    MIN_GAP_BETWEEN_ROOMS = 4
 
     MIN_WIDTH_TO_HEIGHT_ROOM_RATIO = 0.50
+
+    MAX_NUM_ROOM_GEN_GUESSES = 100
 
     MIN_EXTRA_CORRIDORS = 3
     MAX_EXTRA_CORRIDORS = 3
@@ -68,9 +72,9 @@ class BasicFloorGenerator(BaseFloorGenerator):
         door_needed_tiles = []
         for corridor in corridors:
             if random.random() < BasicFloorGenerator.CHANCE_OF_DOOR_AT_END_OF_CORRIDOR:
-                if corridor[0] not in no_door_needed_tiles:
+                if corridor[0] not in no_door_needed_tiles and corridor[0] not in door_needed_tiles:
                     door_needed_tiles.append(corridor[0])
-                if corridor[-1] not in no_door_needed_tiles:
+                if corridor[-1] not in no_door_needed_tiles  and corridor[-1] not in door_needed_tiles:
                     door_needed_tiles.append(corridor[-1])
                 potential_no_door_tiles = ((self.get_neighbor_tiles(corridor[0]) if not corridor[0] in no_door_needed_tiles else []) +
                     (self.get_neighbor_tiles(corridor[-1]) if not corridor[-1] in no_door_needed_tiles else []))
@@ -88,6 +92,14 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
         #return object
         floor = Floor(width, height, tiles)
+
+        #Doors
+        for i, tile in enumerate(door_needed_tiles):
+            door = Entity("Door " + str(i), tile[0], tile[1])
+            door.add_component(DoorComponent(door, closed=True))
+            door.add_component(ObstructsMovement(door))
+            door.add_component(VisibleComponent(door, DoorComponent.CLOSED_TILE))
+            floor.add_entity(door)
 
         #Stairs
         up_stair_x = random.randint(self.rooms[0]["x"], self.rooms[0]["x"] + self.rooms[0]["w"] - 1)
@@ -117,8 +129,10 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
         ideal_num_rooms = random.randint(BasicFloorGenerator.MIN_NUM_ROOMS, BasicFloorGenerator.MAX_NUM_ROOMS)
 
+        print("generating ideally " + str(ideal_num_rooms) + " rooms")
+
         guess_counter = 0 #if you have 100 failed placement attempts, give up and use what you have.
-        while guess_counter < 1000 and len(rooms) < ideal_num_rooms:
+        while guess_counter < BasicFloorGenerator.MAX_NUM_ROOM_GEN_GUESSES and len(rooms) < ideal_num_rooms:
             guess_room_width = random.randint(min_room_width, max_room_width)
             guess_room_height = random.randint(min_room_height, max_room_height)
             room_guess = self.generate_potential_room_location(guess_room_width, guess_room_height)
@@ -127,6 +141,9 @@ class BasicFloorGenerator(BaseFloorGenerator):
                 rooms.append(room_guess)
                 guess_counter = 0
             guess_counter += 1
+
+        print("actually generated " + str(len(rooms)) + " rooms")
+
         return rooms
 
     def generate_potential_room_location(self, guess_width, guess_height):
@@ -141,7 +158,7 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
     def is_room_location_valid(self, check_room, rooms):
         for room in rooms:
-            if self.get_gap_between_rooms(room, check_room) < BasicFloorGenerator.MAX_GAP_BETWEEN_ROOMS:
+            if self.get_gap_between_rooms(room, check_room) < BasicFloorGenerator.MIN_GAP_BETWEEN_ROOMS:
                 return False
         return True
 
@@ -180,15 +197,11 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
         #add a few extra connections
         extra_connections = random.randint(BasicFloorGenerator.MIN_EXTRA_CORRIDORS, BasicFloorGenerator.MAX_EXTRA_CORRIDORS)
-        print(extra_connections)
         for extra in range(extra_connections):
-            print("making a random connection")
             random.shuffle(reached_nodes)
             extra_connection = self.get_random_nonexistant_connection(reached_nodes, connection_tree)
             if not extra_connection:
-                print("no connections possible")
                 break
-            print("adding connection: " + str(extra_connection))
             connection_tree.append(extra_connection)
 
         corridors = []
@@ -240,7 +253,6 @@ class BasicFloorGenerator(BaseFloorGenerator):
             for node_2 in nodes:
                 if not ((node_1, node_2) in connection_tree or (node_2, node_1) in connection_tree) and not node_1 == node_2:
                     return (node_1, node_2)
-        print("no space for extra corridors")
         return None
 
     def bend_path_around_obstacles(self, path):

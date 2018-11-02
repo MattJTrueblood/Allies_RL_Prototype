@@ -3,6 +3,7 @@ from model.mapgen.basic_floor_generator import BasicFloorGenerator
 from model.components.player_component import PlayerComponent
 from model.components.stair_component import StairComponent
 from model.components.visible_component import VisibleComponent
+from model.components.tags import ObstructsMovement, CanOpenDoors
 from model.entity import Entity
 from view.canvas_tile import CanvasTile
 import tcod
@@ -23,9 +24,11 @@ for i in range(NUM_FLOORS):
         floors[i].get_entity("down_stair").get_component(StairComponent).set_destination_floor(floors[i+1])
 
 current_floor = floors[0]
-player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.get_entity("up_stair").y, True)
+player = Entity("player", current_floor.get_entity("up_stair").x, current_floor.get_entity("up_stair").y)
 player.add_component(PlayerComponent(player))
 player.add_component(VisibleComponent(player, CanvasTile(None, tcod.Color(0, 100, 0), '@')))
+player.add_component(ObstructsMovement(player))
+player.add_component(CanOpenDoors(player))
 current_floor.add_entity(player)
 
 messages = ["Welcome!"]
