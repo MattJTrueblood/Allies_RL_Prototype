@@ -2,6 +2,7 @@ from controllers.base_controller import BasePanelController
 import tcod
 import model.game as game
 import core
+import controllers.world_lighting_controller as world_lighting_controller
 from view.panel_canvas import PanelCanvas
 from model.components.player_component import PlayerComponent
 from model.components.visible_component import VisibleComponent
@@ -21,45 +22,7 @@ class GamePanelController(BasePanelController):
         self.redraw_canvas()
 
     def redraw_canvas(self):
-        #Draw current floor in viewport
-        for i in range(self.canvas.width):
-            for j in range(self.canvas.height):
-                ij_world = self.canvas_coord_to_world_coord(i, j)
-                if(self.world_coord_in_bounds(ij_world[0], ij_world[1])):
-                    tile_to_draw = game.current_floor.get_tile(ij_world[0], ij_world[1]).canvas_tile
-                    self.canvas.put_tile(i, j, tile_to_draw)
-                else:
-                    self.canvas.put_tile(i, j, PanelCanvas.default_canvas_tile)
-
-        #Draw entities in viewport
-        for entity in game.current_floor.get_entities():
-            visible_component= entity.get_component(VisibleComponent)
-            if visible_component:
-                entity_xy_canvas = self.world_coord_to_canvas_coord(entity.x, entity.y)
-                if self.canvas_coord_in_bounds(entity_xy_canvas[0], entity_xy_canvas[1]):
-                    tile_to_draw = visible_component.get_canvas_tile()
-                    self.canvas.put_char(entity_xy_canvas[0], entity_xy_canvas[1],
-                        self.canvas.get_tile(entity_xy_canvas[0], entity_xy_canvas[1]).bgcolor,
-                        tile_to_draw.fgcolor, tile_to_draw.character)
-
-
-
-
-    def canvas_coord_to_world_coord(self, x_canvas, y_canvas):
-        x_world = game.player.x - self.panel_center_x + x_canvas
-        y_world = game.player.y - self.panel_center_y + y_canvas
-        return (x_world, y_world)
-
-    def world_coord_to_canvas_coord(self, x_world, y_world):
-        x_canvas = x_world + self.panel_center_x - game.player.x
-        y_canvas = y_world + self.panel_center_y - game.player.y
-        return (x_canvas, y_canvas)
-
-    def world_coord_in_bounds(self, world_x, world_y):
-        return world_x >= 0 and world_x < game.current_floor.width and world_y >= 0 and world_y < game.current_floor.height
-
-    def canvas_coord_in_bounds(self, canvas_x, canvas_y):
-        return canvas_x >= 0 and canvas_x < self.canvas.width and canvas_y >= 0 and canvas_y < self.canvas.height
+        world_lighting_controller.draw_canvas_with_lighting(self.canvas, self.panel_center_x, self.panel_center_y)
 
     KEY_SWITCH = {
         tcod.KEY_UP: (0, -1),
