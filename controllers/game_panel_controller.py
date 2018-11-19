@@ -6,8 +6,10 @@ import controllers.world_lighting_controller as world_lighting_controller
 from view.panel_canvas import PanelCanvas
 from model.components.player_component import PlayerComponent
 from model.components.visible_component import VisibleComponent
-from model.components.interfaces import Interactive
+from model.components.interfaces import GroundInteractive
+from model.components.interfaces import AdjacentInteractive
 from model.components.interfaces import UpdateOnTick
+from model.components.door_component import DoorComponent
 
 class GamePanelController(BasePanelController):
 
@@ -37,12 +39,24 @@ class GamePanelController(BasePanelController):
             game.player.get_component(PlayerComponent).move(direction_to_move[0], direction_to_move[1])
 
         if(key_event.vk == tcod.KEY_SPACE):
-            interactive_entity_next_to_player = next((entity for entity in game.current_floor.get_entities()
-                if entity.get_component(Interactive) and entity.x == game.player.x and entity.y == game.player.y), None)
-            if interactive_entity_next_to_player:
-                interactive_entity_next_to_player.get_component(Interactive).interact(game.player)
+            for entity in game.current_floor.get_entities():
+                if entity.get_component(GroundInteractive) and self.entity_in_same_tile_as_player(entity):
+                    entity.get_component(GroundInteractive).interact_ground(game.player)
+                    break
+            else: #if no ground entity
+                for entity in game.current_floor.get_entities():
+                    if entity.get_component(AdjacentInteractive) and self.entity_adjacent_to_player(entity):
+                        entity.get_component(AdjacentInteractive).interact_adjacent(game.player)
+                        break
 
+    def entity_in_same_tile_as_player(self, entity):
+        return self.entity_manhattan_distance_from_player(entity) == 0
 
+    def entity_adjacent_to_player(self, entity):
+        return self.entity_manhattan_distance_from_player(entity) == 1
+
+    def entity_manhattan_distance_from_player(self, entity):
+        return (abs(entity.x - game.player.x) + abs(entity.y - game.player.y))
 
     def handle_mouse_event(self, mouse_event):
         pass #TODO

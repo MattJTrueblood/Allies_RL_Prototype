@@ -1,8 +1,16 @@
 from abc import ABC, abstractmethod
 
-class Interactive(ABC):
+class GroundInteractive(ABC):
     @abstractmethod
-    def interact(self, actor): pass
+    def interact_ground(self, actor): pass
+
+class AdjacentInteractive(ABC):
+    @abstractmethod
+    def interact_adjacent(self, actor): pass
+
+class MoveInteractive(ABC):
+    @abstractmethod
+    def interact_move(self, actor): pass
 
 class UpdateOnTick(ABC):
     @abstractmethod

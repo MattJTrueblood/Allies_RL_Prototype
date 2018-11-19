@@ -5,6 +5,8 @@ from model.floor import Floor
 from model.entity import Entity
 from model.components.stair_component import StairComponent
 from model.components.visible_component import VisibleComponent
+from model.components.door_component import DoorComponent
+from model.components.tags import ObstructsMovement
 import tcod
 import random
 import math
@@ -13,18 +15,22 @@ import math
 
 class BasicFloorGenerator(BaseFloorGenerator):
 
-    MIN_NUM_ROOMS = 3
-    MAX_NUM_ROOMS = 3
+    MIN_NUM_ROOMS = 13
+    MAX_NUM_ROOMS = 13
 
     MIN_ROOM_SIZE_RATIO = 0.1
-    MAX_ROOM_SIZE_RATIO = 0.4
+    MAX_ROOM_SIZE_RATIO = 0.5
 
-    MAX_GAP_BETWEEN_ROOMS = 3
+    MIN_GAP_BETWEEN_ROOMS = 4
 
     MIN_WIDTH_TO_HEIGHT_ROOM_RATIO = 0.50
 
-    MIN_EXTRA_CORRIDORS = 1
-    MAX_EXTRA_CORRIDORS = 1
+    MAX_NUM_ROOM_GEN_GUESSES = 100
+
+    MIN_EXTRA_CORRIDORS = 3
+    MAX_EXTRA_CORRIDORS = 3
+
+    CHANCE_OF_DOOR_AT_END_OF_CORRIDOR = 1.00
 
     def generate_floor(self, width, height):
         self.width = width
@@ -39,20 +45,61 @@ class BasicFloorGenerator(BaseFloorGenerator):
         #Fill in corridors
         for corridor in corridors:
             for coord in corridor:
-                tiles[coord[0]][coord[1]].canvas_tile.character = " "
-                tiles[coord[0]][coord[1]].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
+                tiles[coord[0]][coord[1]].canvas_tile.character = "."
+                tiles[coord[0]][coord[1]].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
                 tiles[coord[0]][coord[1]].is_obstacle = False
+
         #Fill in rooms
         for room_num, room in enumerate(self.rooms):
             for i in range(room["x"], room["x"] + room["w"]):
                 for j in range(room["y"], room["y"] + room["h"]):
-                    tiles[i][j].canvas_tile.character = str(room_num)[0]
-                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
+                    tiles[i][j].canvas_tile.character = '.'
                     tiles[i][j].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
                     tiles[i][j].is_obstacle = False
 
+        #Test stuff
+        for i in range(self.width):
+            for j in range(self.height):
+                if not self.is_valid_corridor_tile((i, j)):
+                    tiles[i][j].canvas_tile.bgcolor = tcod.Color(0, 0, 0)
+                if i == 0:
+                    tiles[i][j].canvas_tile.character = str(j)[-1]
+                if j == 0:
+                    tiles[i][j].canvas_tile.character = str(i)[-1]
+
+        #Fixing entrances and exist to rooms so there are no doors directly adjacent to each other
+        no_door_needed_tiles = []
+        door_needed_tiles = []
+        for corridor in corridors:
+            if random.random() < BasicFloorGenerator.CHANCE_OF_DOOR_AT_END_OF_CORRIDOR:
+                if corridor[0] not in no_door_needed_tiles and corridor[0] not in door_needed_tiles:
+                    door_needed_tiles.append(corridor[0])
+                if corridor[-1] not in no_door_needed_tiles  and corridor[-1] not in door_needed_tiles:
+                    door_needed_tiles.append(corridor[-1])
+                potential_no_door_tiles = ((self.get_neighbor_tiles(corridor[0]) if not corridor[0] in no_door_needed_tiles else []) +
+                    (self.get_neighbor_tiles(corridor[-1]) if not corridor[-1] in no_door_needed_tiles else []))
+                for other_corridor in corridors:
+                    if other_corridor[0] in potential_no_door_tiles:
+                        no_door_needed_tiles.append(other_corridor[0])
+                    if other_corridor[-1] in potential_no_door_tiles:
+                        no_door_needed_tiles.append(other_corridor[-1])
+
+        #filling in unneeded tiles
+        for tile in no_door_needed_tiles:
+            tiles[tile[0]][tile[1]].canvas_tile.character = '#'
+            tiles[tile[0]][tile[1]].canvas_tile.fgcolor = tcod.Color(255, 255, 255)
+            tiles[tile[0]][tile[1]].is_obstacle = True
+
         #return object
         floor = Floor(width, height, tiles)
+
+        #Doors
+        for i, tile in enumerate(door_needed_tiles):
+            door = Entity("Door " + str(i), tile[0], tile[1])
+            door.add_component(DoorComponent(door, closed=True))
+            door.add_component(ObstructsMovement(door))
+            door.add_component(VisibleComponent(door, DoorComponent.CLOSED_TILE))
+            floor.add_entity(door)
 
         #Stairs
         up_stair_x = random.randint(self.rooms[0]["x"], self.rooms[0]["x"] + self.rooms[0]["w"] - 1)
@@ -83,15 +130,16 @@ class BasicFloorGenerator(BaseFloorGenerator):
         ideal_num_rooms = random.randint(BasicFloorGenerator.MIN_NUM_ROOMS, BasicFloorGenerator.MAX_NUM_ROOMS)
 
         guess_counter = 0 #if you have 100 failed placement attempts, give up and use what you have.
-        while guess_counter < 1000 and len(rooms) < ideal_num_rooms:
-            guess_room_width = random.randint(min_room_width, max_room_width)
-            guess_room_height = random.randint(min_room_height, max_room_height)
+        while guess_counter < BasicFloorGenerator.MAX_NUM_ROOM_GEN_GUESSES and len(rooms) < ideal_num_rooms:
+            guess_room_width = random.randint(min_room_width, (max_room_width - int((max_room_width - min_room_width) * (guess_counter / BasicFloorGenerator.MAX_NUM_ROOM_GEN_GUESSES))))
+            guess_room_height = random.randint(min_room_height, (max_room_height - int((max_room_height - min_room_height) * (guess_counter / BasicFloorGenerator.MAX_NUM_ROOM_GEN_GUESSES))))
             room_guess = self.generate_potential_room_location(guess_room_width, guess_room_height)
             if self.is_room_location_valid(room_guess, rooms) and self.is_room_in_ratio_bounds(room_guess):
                 room_guess["id"] = len(rooms)
                 rooms.append(room_guess)
-                guess_counter = 0
+                guess_counter = int(guess_counter / 2)
             guess_counter += 1
+
         return rooms
 
     def generate_potential_room_location(self, guess_width, guess_height):
@@ -106,7 +154,7 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
     def is_room_location_valid(self, check_room, rooms):
         for room in rooms:
-            if self.get_gap_between_rooms(room, check_room) < BasicFloorGenerator.MAX_GAP_BETWEEN_ROOMS:
+            if self.get_gap_between_rooms(room, check_room) < BasicFloorGenerator.MIN_GAP_BETWEEN_ROOMS:
                 return False
         return True
 
@@ -145,15 +193,11 @@ class BasicFloorGenerator(BaseFloorGenerator):
 
         #add a few extra connections
         extra_connections = random.randint(BasicFloorGenerator.MIN_EXTRA_CORRIDORS, BasicFloorGenerator.MAX_EXTRA_CORRIDORS)
-        print(extra_connections)
         for extra in range(extra_connections):
-            print("making a random connection")
             random.shuffle(reached_nodes)
             extra_connection = self.get_random_nonexistant_connection(reached_nodes, connection_tree)
             if not extra_connection:
-                print("no connections possible")
                 break
-            print("adding connection: " + str(extra_connection))
             connection_tree.append(extra_connection)
 
         corridors = []
@@ -178,22 +222,25 @@ class BasicFloorGenerator(BaseFloorGenerator):
         return self.bend_path_around_obstacles(basic_path)
 
     def generate_L_path(self, start_pos, end_pos):
-        path = [start_pos]
+        path = []
 
-        leftmost, rightmost, topmost, bottommost = -1, -1, -1, -1
-        if(start_pos[0] <= end_pos[0]):
-            leftmost, rightmost = start_pos[0], end_pos[0]
+        if start_pos[0] <= end_pos[0]:
+            #travel east
+            for x in range(start_pos[0], end_pos[0] + 1):
+                path.append((x, start_pos[1]))
         else:
-            leftmost, rightmost = end_pos[0], start_pos[0]
-        if(start_pos[1] <= end_pos[1]):
-            topmost, bottommost = start_pos[1], end_pos[1]
-        else:
-            topmost, bottommost = end_pos[1], start_pos[1]
+            #travel west
+            for x in reversed(range(end_pos[0], start_pos[0] + 1)):
+                path.append((x, start_pos[1]))
 
-        for x in range(leftmost, rightmost + 1):
-            path.append((x, start_pos[1]))
-        for y in range(topmost, bottommost + 1):
-            path.append((end_pos[0], y))
+        if start_pos[1] <= end_pos[1]:
+            #travel south
+            for y in range(start_pos[1], end_pos[1] + 1):
+                path.append((end_pos[0], y))
+        else:
+            #travel north
+            for y in reversed(range(end_pos[1], start_pos[1] + 1)):
+                path.append((end_pos[0], y))
 
         return path
 
@@ -202,7 +249,6 @@ class BasicFloorGenerator(BaseFloorGenerator):
             for node_2 in nodes:
                 if not ((node_1, node_2) in connection_tree or (node_2, node_1) in connection_tree) and not node_1 == node_2:
                     return (node_1, node_2)
-        print("no space for extra corridors")
         return None
 
     def bend_path_around_obstacles(self, path):
@@ -221,29 +267,11 @@ class BasicFloorGenerator(BaseFloorGenerator):
         if(len(path) < 3):
             return path
 
-        #find all invalid contiguous sections of the path.  Use pathfind algorithm
-        #to find a valid path between the valid portions and replace the invalid section with that
-        invalid_sublist = []
-        in_invalid_segment = False
-        last_valid_tile_index = 0
         for i, tile in enumerate(path[1:-1]):
-            current_tile_is_valid = self.is_valid_corridor_tile(tile)
-            if in_invalid_segment:
-                if current_tile_is_valid:
-                    invalid_sublist.append(tile)
-                else:
-                    in_invalid_segment = False
-                    print("replacing " + str(path[last_valid_tile_index]) + " to " + str(tile))
-                    valid_replacement_path = self.find_valid_corridor_path(path[last_valid_tile_index], tile)
-                    print("replacement: " + str(valid_replacement_path))
-                    path[last_valid_tile_index + 1 : i] = valid_replacement_path
-            else:
-                if not current_tile_is_valid:
-                    in_invalid_segment = True
-                    invalid_sublist.append(tile)
-                    last_valid_tile = i - 1
-
+            if not self.is_valid_corridor_tile(tile) and tile != path[-1]:
+                return self.find_valid_corridor_path(path[0], path[-1])
         return path
+
 
     def find_valid_corridor_path(self, start_tile, end_tile):
         closed_set = []
@@ -263,7 +291,7 @@ class BasicFloorGenerator(BaseFloorGenerator):
             closed_set.append(current)
 
             for neighbor in self.get_neighbor_tiles(current):
-                if(neighbor in closed_set):
+                if (not self.is_valid_corridor_tile(neighbor) and not neighbor == end_tile) or neighbor in closed_set:
                     continue
 
                 tentative_g_score = g_score[current] + 1
@@ -298,13 +326,14 @@ class BasicFloorGenerator(BaseFloorGenerator):
         neighbors.append((current_tile[0] - 1, current_tile[1]))
         neighbors.append((current_tile[0], current_tile[1] + 1))
         neighbors.append((current_tile[0], current_tile[1] - 1))
-        return [neighbor for neighbor in neighbors if self.is_valid_corridor_tile(neighbor)]
+        return neighbors
 
     def is_valid_corridor_tile(self, tile):
-        if tile[0] > 0 and tile[0] < self.width - 1 and tile[1] > 0 and tile[1] < self.height:
+        if tile[0] > 0 and tile[0] < self.width - 1 and tile[1] > 0 and tile[1] < self.height - 1:
             if not self.tile_inside_room(tile):
                 adjacent_room = self.get_id_of_room_adjacent_to_tile(tile)
-                return adjacent_room == None
+                if adjacent_room == None:
+                    return True
         return False
 
     def tile_inside_room(self, tile):

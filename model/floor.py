@@ -4,6 +4,7 @@ from model.dungeon_tile import DungeonTile
 from view.canvas_tile import CanvasTile
 from model.components.player_component import PlayerComponent
 from model.components.stair_component import StairComponent
+from model.components.tags import ObstructsMovement
 
 class Floor:
     defaul_dungeon_tile = DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), ' '), False)
@@ -41,7 +42,7 @@ class Floor:
     def can_move_into_tile(self, x, y):
         for entity in self.__entities:
             if (self.get_tile(x, y).is_obstacle
-                or entity.x == x and entity.y == y and entity.obstructs):
+                or entity.x == x and entity.y == y and entity.get_component(ObstructsMovement)):
                 return False
         return True
 

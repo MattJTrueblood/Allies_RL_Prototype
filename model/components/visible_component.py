@@ -8,3 +8,6 @@ class VisibleComponent(BaseComponent):
 
     def get_canvas_tile(self):
         return self.canvas_tile
+
+    def set_canvas_tile(self, new_tile):
+        self.canvas_tile = new_tile

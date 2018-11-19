@@ -1,6 +1,7 @@
 from model.components.base_component import BaseComponent
 from model.components.health_component import HealthComponent
 from model.components.ally_component import AllyComponent
+from model.components.interfaces import MoveInteractive
 import model.game as game
 from view.canvas_tile import CanvasTile
 import tcod
@@ -23,6 +24,8 @@ class PlayerComponent(BaseComponent):
                         self.swap_position(AllyComponent)
                     else:
                         self.attack(entity)
+                elif entity.get_component(MoveInteractive):
+                    entity.get_component(MoveInteractive).interact_move(self.parent_entity)
 
     def swap_position(self, entity):
         entity.x, self.parent_entity.x = self.parent_entity.x, entity.x
@@ -32,7 +35,7 @@ class PlayerComponent(BaseComponent):
         healthComponent = entity.get_component(HealthComponent)
         healthComponent.receiveAttack(self.attackPower)
 
-    def interact(self):
+    def do_interact(self):
         game.current_floor.interact(self.entity.x, self.entity.y)
         core.master_tick += 1
 

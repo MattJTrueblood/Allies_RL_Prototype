@@ -1,10 +1,10 @@
-from model.components.interfaces import Interactive
+from model.components.interfaces import GroundInteractive
 from model.components.base_component import BaseComponent
 import model.game as game
 from view.canvas_tile import CanvasTile
 import tcod
 
-class StairComponent(BaseComponent, Interactive):
+class StairComponent(BaseComponent, GroundInteractive):
 
     def __init__(self, parent_entity, is_up):
         super().__init__(parent_entity)
@@ -13,7 +13,7 @@ class StairComponent(BaseComponent, Interactive):
     def set_destination_floor(self, floor):
         self.dest_floor = floor
 
-    def interact(self, actor):
+    def interact_ground(self, actor):
         if actor == game.player:
             if self.is_up:
                 game.go_up_to_floor(self.dest_floor)
