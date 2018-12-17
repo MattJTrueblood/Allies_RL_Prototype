@@ -16,7 +16,7 @@ class BlankFloorGenerator(BaseFloorGenerator):
 
         ####make tiles####
 
-        tiles = [[DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), '.'), False) for i in range(height)] for j in range(width)]
+        tiles = [[DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), '.'), False, True) for i in range(height)] for j in range(width)]
         for i in range(width):
             for j in range(height):
                 if i == 0 or j == 0 or i == width-1 or j == height-1:

@@ -33,7 +33,7 @@ def main():
             return True;
         else:
             core.current_frame.receive_events(key_event, mouse_event)
-
+            
         core.current_frame.update()
         renderer.render()
 

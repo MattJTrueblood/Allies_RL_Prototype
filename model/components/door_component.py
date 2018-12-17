@@ -13,6 +13,7 @@ class DoorComponent(BaseComponent, MoveInteractive, AdjacentInteractive):
     def __init__(self, parent_entity, closed=True):
         super().__init__(parent_entity)
         self.closed = closed
+        self.update_visible_component()
 
     def interact_adjacent(self, actor):
         if actor.get_component(CanOpenDoors):
@@ -30,7 +31,9 @@ class DoorComponent(BaseComponent, MoveInteractive, AdjacentInteractive):
         visible_component = self.parent_entity.get_component(VisibleComponent)
         if(self.closed):
             visible_component.set_canvas_tile(DoorComponent.CLOSED_TILE)
+            visible_component.set_obstructs_vision(True)
             self.parent_entity.get_component_including_disabled(ObstructsMovement).enable()
         else:
             visible_component.set_canvas_tile(DoorComponent.OPEN_TILE)
+            visible_component.set_obstructs_vision(False)
             self.parent_entity.get_component(ObstructsMovement).disable()

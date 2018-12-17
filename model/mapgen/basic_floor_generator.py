@@ -36,7 +36,7 @@ class BasicFloorGenerator(BaseFloorGenerator):
         self.width = width
         self.height = height
         #all walls at start
-        tiles = [[DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), '#'), True) for i in range(height)] for j in range(width)]
+        tiles = [[DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), '#'), True, False) for i in range(height)] for j in range(width)]
         #create rooms
         self.rooms = self.generate_room_locations()
         #create corridors
@@ -46,16 +46,18 @@ class BasicFloorGenerator(BaseFloorGenerator):
         for corridor in corridors:
             for coord in corridor:
                 tiles[coord[0]][coord[1]].canvas_tile.character = "."
-                tiles[coord[0]][coord[1]].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
+                tiles[coord[0]][coord[1]].canvas_tile.fgcolor = tcod.Color(255, 255, 255)
                 tiles[coord[0]][coord[1]].is_obstacle = False
+                tiles[coord[0]][coord[1]].is_transparent = True
 
         #Fill in rooms
         for room_num, room in enumerate(self.rooms):
             for i in range(room["x"], room["x"] + room["w"]):
                 for j in range(room["y"], room["y"] + room["h"]):
                     tiles[i][j].canvas_tile.character = '.'
-                    tiles[i][j].canvas_tile.fgcolor = tcod.Color(70, 70, 70)
+                    tiles[i][j].canvas_tile.fgcolor = tcod.Color(255, 255, 255)
                     tiles[i][j].is_obstacle = False
+                    tiles[i][j].is_transparent = True
 
         #Test stuff
         for i in range(self.width):
@@ -89,6 +91,7 @@ class BasicFloorGenerator(BaseFloorGenerator):
             tiles[tile[0]][tile[1]].canvas_tile.character = '#'
             tiles[tile[0]][tile[1]].canvas_tile.fgcolor = tcod.Color(255, 255, 255)
             tiles[tile[0]][tile[1]].is_obstacle = True
+            tiles[tile[0]][tile[1]].is_transparent = False
 
         #return object
         floor = Floor(width, height, tiles)
@@ -96,9 +99,9 @@ class BasicFloorGenerator(BaseFloorGenerator):
         #Doors
         for i, tile in enumerate(door_needed_tiles):
             door = Entity("Door " + str(i), tile[0], tile[1])
-            door.add_component(DoorComponent(door, closed=True))
-            door.add_component(ObstructsMovement(door))
             door.add_component(VisibleComponent(door, DoorComponent.CLOSED_TILE))
+            door.add_component(ObstructsMovement(door))
+            door.add_component(DoorComponent(door, closed=True))
             floor.add_entity(door)
 
         #Stairs
