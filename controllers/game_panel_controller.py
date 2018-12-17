@@ -2,7 +2,7 @@ from controllers.base_controller import BasePanelController
 import tcod
 import model.game as game
 import core
-import controllers.world_lighting_controller as world_lighting_controller
+from controllers.world_lighting_controller import WorldLightingController
 from view.panel_canvas import PanelCanvas
 from model.components.player_component import PlayerComponent
 from model.components.visible_component import VisibleComponent
@@ -21,10 +21,11 @@ class GamePanelController(BasePanelController):
         super().init_canvas(x, y, width, height)
         self.panel_center_x =  int(self.canvas.width / 2)
         self.panel_center_y = int(self.canvas.height / 2)
+        self.lighting_controller = WorldLightingController(self.canvas);
         self.redraw_canvas()
 
     def redraw_canvas(self):
-        world_lighting_controller.draw_canvas_with_lighting(self.canvas, self.panel_center_x, self.panel_center_y)
+        self.lighting_controller.draw_canvas_with_lighting(self.canvas, self.panel_center_x, self.panel_center_y)
 
     KEY_SWITCH = {
         tcod.KEY_UP: (0, -1),
