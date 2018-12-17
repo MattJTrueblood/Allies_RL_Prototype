@@ -9,7 +9,7 @@ from view.canvas_tile import CanvasTile
 import tcod
 import random
 
-NUM_FLOORS = 1
+NUM_FLOORS = 3
 
 floors = []
 generator = BasicFloorGenerator()

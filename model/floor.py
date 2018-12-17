@@ -5,15 +5,21 @@ from view.canvas_tile import CanvasTile
 from model.components.player_component import PlayerComponent
 from model.components.stair_component import StairComponent
 from model.components.tags import ObstructsMovement
+from enum import Enum
+
+class Visibility(Enum):
+    VISIBLE = 0  #currently in view of player or ally
+    SEEN = 1  #has been in view of player or ally previously
+    UNKNOWN = 2  #cannot be seen
 
 class Floor:
-    defaul_dungeon_tile = DungeonTile(CanvasTile(tcod.Color(0, 0, 0), tcod.Color(255, 255, 255), ' '), False)
 
     def __init__(self, width, height, floor):
         self.width = width
         self.height = height
         self.__body = floor
         self.__entities = []
+        self.__visibility_map = [[Visibility.UNKNOWN for i in range(self.width)] for j in range(self.height)]
 
     def get_tile(self, x, y):
         return self.__body[x][y]
@@ -54,3 +60,9 @@ class Floor:
 
     def get_entities(self):
         return self.__entities
+
+    def get_visibility_map(self):
+        return self.__visibility_map
+
+    def set_visibility_map(self, new_map):
+        self.__visibility_map = new_map

@@ -25,7 +25,7 @@ class GamePanelController(BasePanelController):
         self.redraw_canvas()
 
     def redraw_canvas(self):
-        self.lighting_controller.draw_canvas_with_lighting(self.canvas, self.panel_center_x, self.panel_center_y)
+        self.lighting_controller.draw_canvas_with_lighting(self.panel_center_x, self.panel_center_y)
 
     KEY_SWITCH = {
         tcod.KEY_UP: (0, -1),
