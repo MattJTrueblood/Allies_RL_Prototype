@@ -7,17 +7,28 @@ class WorldLightingController:
 
     def __init__(self, canvas):
         self.canvas = canvas
+        self.visibility_map = 0
 
     def draw_canvas_with_lighting(self, panel_center_x, panel_center_y):
 
         #calculate which tiles are visible, seen, and unknown.
-        visibility_map = game.current_floor.get_visibility_map()
+        self.visibility_map = game.current_floor.get_visibility_map()
+        self.visibility_map[game.player.x][game.player.y] = Visibility.VISIBLE
+        self.visibility_map[game.player.x+1][game.player.y] = Visibility.VISIBLE
+        self.visibility_map[game.player.x+1][game.player.y-1] = Visibility.VISIBLE
+        self.visibility_map[game.player.x+1][game.player.y+1] = Visibility.VISIBLE
+        self.visibility_map[game.player.x-1][game.player.y] = Visibility.VISIBLE
+        self.visibility_map[game.player.x-1][game.player.y+1] = Visibility.VISIBLE
+        self.visibility_map[game.player.x-1][game.player.y-1] = Visibility.VISIBLE
+        self.visibility_map[game.player.x][game.player.y+1] = Visibility.VISIBLE
+        self.visibility_map[game.player.x][game.player.y-1] = Visibility.VISIBLE
+        game.current_floor.set_visibility_map(self.visibility_map)
 
         #Draw current floor in viewport
         for i in range(self.canvas.width):
             for j in range(self.canvas.height):
                 ij_world = self.canvas_coord_to_world_coord(panel_center_x, panel_center_y, i, j)
-                if(self.world_coord_in_bounds(ij_world[0], ij_world[1])):
+                if(self.world_coord_in_bounds(ij_world[0], ij_world[1]) and self.get_world_coord_visibility(ij_world[0], ij_world[1]) == Visibility.VISIBLE):
                     tile_to_draw = game.current_floor.get_tile(ij_world[0], ij_world[1]).canvas_tile
                     self.canvas.put_tile(i, j, tile_to_draw)
                 else:
@@ -28,12 +39,14 @@ class WorldLightingController:
             visible_component= entity.get_component(VisibleComponent)
             if visible_component:
                 entity_xy_canvas = self.world_coord_to_canvas_coord(panel_center_x, panel_center_y, entity.x, entity.y)
-                if self.canvas_coord_in_bounds(entity_xy_canvas[0], entity_xy_canvas[1]):
+                if(self.canvas_coord_in_bounds(entity_xy_canvas[0], entity_xy_canvas[1]) and self.get_world_coord_visibility(entity.x, entity.y) == Visibility.VISIBLE):
                     tile_to_draw = visible_component.get_canvas_tile()
                     self.canvas.put_char(entity_xy_canvas[0], entity_xy_canvas[1],
                         self.canvas.get_tile(entity_xy_canvas[0], entity_xy_canvas[1]).bgcolor,
                         tile_to_draw.fgcolor, tile_to_draw.character)
 
+    def get_world_coord_visibility(self, x, y):
+        return self.visibility_map[x][y]
 
     def canvas_coord_to_world_coord(self, panel_center_x, panel_center_y, x_canvas, y_canvas):
         x_world = game.player.x - panel_center_x + x_canvas

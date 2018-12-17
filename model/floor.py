@@ -19,7 +19,7 @@ class Floor:
         self.height = height
         self.__body = floor
         self.__entities = []
-        self.__visibility_map = [[Visibility.UNKNOWN for i in range(self.width)] for j in range(self.height)]
+        self.__visibility_map = [[Visibility.UNKNOWN for i in range(self.height)] for j in range(self.width)]
 
     def get_tile(self, x, y):
         return self.__body[x][y]
