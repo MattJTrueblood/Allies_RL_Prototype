@@ -20,6 +20,7 @@ class Floor:
         self.__body = floor
         self.__entities = []
         self.__visibility_map = [[Visibility.UNKNOWN for i in range(self.height)] for j in range(self.width)]
+        self.__last_seen_tile_map = [[CanvasTile(tcod.Color(255, 105, 180), tcod.Color(255, 105, 180), '&') for i in range(self.height)] for j in range(self.width)]
 
     def get_tile(self, x, y):
         return self.__body[x][y]
@@ -66,3 +67,9 @@ class Floor:
 
     def set_visibility_map(self, new_map):
         self.__visibility_map = new_map
+
+    def get_last_seen_tile(self, x, y):
+        return self.__last_seen_tile_map[x][y]
+
+    def set_last_seen_tile(self, x, y, newTile):
+        self.__last_seen_tile_map[x][y] = newTile

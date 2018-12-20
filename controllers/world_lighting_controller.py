@@ -1,8 +1,10 @@
 import model.game as game
 from view.panel_canvas import PanelCanvas
+from view.canvas_tile import CanvasTile
 from model.components.visible_component import VisibleComponent
 from model.floor import Visibility
 from model.utils.point import Point
+import tcod
 
 LOS_ROTATE_MATRIX = [
   [1,  0,  0, -1, -1,  0,  0,  1],
@@ -28,23 +30,30 @@ class WorldLightingController:
         #Draw current floor in viewport
         for i in range(self.canvas.width):
             for j in range(self.canvas.height):
+                tile_to_draw = PanelCanvas.default_canvas_tile
                 ij_world = self.canvas_coord_to_world_coord(panel_center_x, panel_center_y, i, j)
-                if(self.world_coord_in_bounds(ij_world[0], ij_world[1]) and self.get_world_coord_visibility(ij_world[0], ij_world[1]) == Visibility.VISIBLE):
-                    tile_to_draw = game.current_floor.get_tile(ij_world[0], ij_world[1]).canvas_tile
-                    self.canvas.put_tile(i, j, tile_to_draw)
-                else:
-                    self.canvas.put_tile(i, j, PanelCanvas.default_canvas_tile)
+                if(self.world_coord_in_bounds(ij_world[0], ij_world[1])):
+                    ij_visibility = self.get_world_coord_visibility(ij_world[0], ij_world[1])
+                    if(ij_visibility == Visibility.VISIBLE):
+                        tile_to_draw = game.current_floor.get_tile(ij_world[0], ij_world[1]).canvas_tile
+                        game.current_floor.set_last_seen_tile(ij_world[0], ij_world[1], tile_to_draw)
+                    elif(ij_visibility == Visibility.SEEN):
+                        tile_to_draw = self.convert_tile_to_grayscale(game.current_floor.get_last_seen_tile(ij_world[0], ij_world[1]))
+                self.canvas.put_tile(i, j, tile_to_draw)
 
         #Draw entities in viewport
         for entity in game.current_floor.get_entities():
             visible_component= entity.get_component(VisibleComponent)
             if visible_component:
                 entity_xy_canvas = self.world_coord_to_canvas_coord(panel_center_x, panel_center_y, entity.x, entity.y)
-                if(self.canvas_coord_in_bounds(entity_xy_canvas[0], entity_xy_canvas[1]) and self.get_world_coord_visibility(entity.x, entity.y) == Visibility.VISIBLE):
-                    tile_to_draw = visible_component.get_canvas_tile()
-                    self.canvas.put_char(entity_xy_canvas[0], entity_xy_canvas[1],
-                        self.canvas.get_tile(entity_xy_canvas[0], entity_xy_canvas[1]).bgcolor,
-                        tile_to_draw.fgcolor, tile_to_draw.character)
+                entity_xy_visible = self.get_world_coord_visibility(entity.x, entity.y)
+                if(self.canvas_coord_in_bounds(entity_xy_canvas[0], entity_xy_canvas[1]) and entity_xy_visible == Visibility.VISIBLE):
+                    entity_tile = visible_component.get_canvas_tile()
+                    tile_to_draw = CanvasTile(self.canvas.get_tile(entity_xy_canvas[0], entity_xy_canvas[1]).bgcolor,
+                            entity_tile.fgcolor, entity_tile.character)
+                    self.canvas.put_tile(entity_xy_canvas[0], entity_xy_canvas[1], tile_to_draw)
+                    game.current_floor.set_last_seen_tile(entity.x, entity.y, tile_to_draw)
+
 
     def update_visibility_map(self):
         for i in range(game.current_floor.width):
@@ -118,6 +127,12 @@ class WorldLightingController:
                         return False
         return game.current_floor.get_tile(point.x, point.y).is_transparent
 
+    def convert_tile_to_grayscale(self, tile):
+        newBgColor = int((tile.bgcolor.r + tile.bgcolor.g + tile.bgcolor.b) / 3.0)
+        newFgColor = int((tile.fgcolor.r + tile.fgcolor.g + tile.fgcolor.b) / 3.0)
+        tile.bgColor = tcod.Color(newBgColor, newBgColor, newBgColor)
+        tile.fgColor = tcod.Color(newFgColor, newFgColor, newFgColor)
+        return tile
 
     def canvas_coord_to_world_coord(self, panel_center_x, panel_center_y, x_canvas, y_canvas):
         x_world = game.player.x - panel_center_x + x_canvas
