@@ -39,6 +39,8 @@ class WorldLightingController:
                         game.current_floor.set_last_seen_tile(ij_world[0], ij_world[1], tile_to_draw)
                     elif(ij_visibility == Visibility.SEEN):
                         tile_to_draw = self.convert_tile_to_grayscale(game.current_floor.get_last_seen_tile(ij_world[0], ij_world[1]))
+                        if not (tile_to_draw.fgcolor.r == tile_to_draw.fgcolor.b == tile_to_draw.fgcolor.g):
+                            print("not grayscale: " + str(tile_to_draw.fgcolor))
                 self.canvas.put_tile(i, j, tile_to_draw)
 
         #Draw entities in viewport
@@ -128,11 +130,9 @@ class WorldLightingController:
         return game.current_floor.get_tile(point.x, point.y).is_transparent
 
     def convert_tile_to_grayscale(self, tile):
-        newBgColor = int((tile.bgcolor.r + tile.bgcolor.g + tile.bgcolor.b) / 3.0)
-        newFgColor = int((tile.fgcolor.r + tile.fgcolor.g + tile.fgcolor.b) / 3.0)
-        tile.bgColor = tcod.Color(newBgColor, newBgColor, newBgColor)
-        tile.fgColor = tcod.Color(newFgColor, newFgColor, newFgColor)
-        return tile
+        newBgColor = int((tile.bgcolor.r + tile.bgcolor.g + tile.bgcolor.b) / 10.0)
+        newFgColor = int((tile.fgcolor.r + tile.fgcolor.g + tile.fgcolor.b) / 10.0)
+        return CanvasTile(tcod.Color(newBgColor, newBgColor, newBgColor), tcod.Color(newFgColor, newFgColor, newFgColor), tile.character)
 
     def canvas_coord_to_world_coord(self, panel_center_x, panel_center_y, x_canvas, y_canvas):
         x_world = game.player.x - panel_center_x + x_canvas
